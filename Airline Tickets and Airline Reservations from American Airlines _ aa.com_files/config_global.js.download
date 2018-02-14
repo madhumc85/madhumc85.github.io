@@ -1,0 +1,107 @@
+com.aa.i11l.amadeus.eRetail.config.global = {
+    "siteOverrides": {
+        "REFRESH": "0",
+        "DIRECT_NON_STOP": "FALSE",
+        "SEVEN_DAY_SEARCH": "TRUE",
+        "TRIP_FLOW": "YES",
+        "SO_SITE_UI_FLIFO_DISP_DOT": "TRUE",
+        "SO_SITE_AIRLINE_LOC_WAIT": "30000",
+        "SO_SITE_CORPORATE_ID": "OCG-MUCWW28AA",
+        "SO_SITE_ALLOW_PROMO": "FALSE",
+        "SO_SITE_ALLOW_LSA_INDICATOR": "TRUE",
+        "SO_SITE_DISPLAY_NBR_OF_LSA": "TRUE",
+        "SO_SITE_ALLOW_FLIFO_OTP_INFO": "TRUE",
+        "SO_SITE_REFARE_TO_1TICKET": "FALSE",
+        "BOOKING_FLOW": "REVENUE"
+    },
+    "flexPricer": {
+        "EMBEDDED_TRANSACTION": "FlexPricerAvailability",
+        "PRICING_TYPE": "O",
+        "FP_ERT_ACTIVATED": "TRUE"
+    },
+    "flexPricerMultiCity": {
+        "EMBEDDED_TRANSACTION": "FlexPricerComplexItineraryAvailability",
+        "PRICING_TYPE": "I",
+        "SO_SITE_FP_ERT_ACTIVATED": "FALSE",
+        "SO_SITE_FP_PRICING_TYPE": "ITIN",
+        "FP_PRICING_TYPE": "ITIN",
+        "OUTPUT_STRUCTURE": "RECOMMENDATION",
+        "PBI_NO_ERT_OUTPUT": "TRUE",
+        "FP_MAX_NUM_DESTINATIONS": "6",
+        "SO_SITE_MAX_NUM_DIFF_CITY": "6",
+        "SO_SITE_FP_COMPLEX_ITINERARY": "Y",
+        "SO_SITE_COMPLEX_ITIN_MODE": "CPX",
+        "FP_CPLX_MAX_ITI_CAL": "500",
+        "SO_SITE_GET_FP_POSTING_LEVEL": "FALSE",
+        "SO_SITE_FP_DATE_RANGE_CHKBOX": "TRUE",
+        "SO_SITE_FD_DISPLAY_MODE": "0",
+        "SO_SITE_DISPLAY_TR_FLIGHTS": "FALSE",
+        "DIRECT_RETRIEVE": "TRUE",
+        "SO_SITE_RUI_HIDE_MDF_SRC": "TRUE"
+    },
+    "globalOverrides": {},
+    "settings": {
+        "ENCODING": "iso-8859-1",
+        "METHOD": "post"
+    },
+    "cff": {
+        "E_CFF": "LOWEST",
+        "P_CFF": "FLEXIBLE"
+    },
+    "mcTest": {
+        "cff": {
+            "E_CFF": "LOWESTMC",
+            "P_CFF": "FLEXIBLE"
+        }
+    },
+    "choice": {
+        "override": "<GLOBAL_LIST mode=\"partial\"><NAME>SITE_SITE_FARE_COMMANDS_AND_OPTIONS</NAME><LIST_ELEMENT><CODE>111</CODE><LIST_VALUE>0</LIST_VALUE><LIST_VALUE>2</LIST_VALUE><LIST_VALUE>4</LIST_VALUE><LIST_VALUE null=\"true\"/><LIST_VALUE>0</LIST_VALUE><LIST_VALUE null=\"true\"/><LIST_VALUE null=\"true\"/><LIST_VALUE null=\"true\"/><LIST_VALUE null=\"true\"/><LIST_VALUE null=\"true\"/><LIST_VALUE null=\"true\"/><LIST_VALUE null=\"true\"/><LIST_VALUE>5</LIST_VALUE><LIST_VALUE null=\"true\"/><LIST_VALUE null=\"true\"/><LIST_VALUE null=\"true\"/><LIST_VALUE null=\"true\"/><LIST_VALUE null=\"true\"/></LIST_ELEMENT></GLOBAL_LIST>"
+    },
+    "retrievePNR": {
+        "SO_SITE_RT_SHOW_PRICES": "FALSE",
+        "DIRECT_RETRIEVE": "TRUE",
+        "SO_SITE_ALLOW_PNR_SERV": "TRUE",
+        "SO_SITE_PNR_SERV_REQ_LOGIN": "FALSE",
+        "EMBEDDED_TRANSACTION": "RetrievePNR",
+        "TRIP_FLOW": "YES",
+        "SO_SITE_AIRLINE_LOC_WAIT": "30000",
+        "SO_SITE_CORPORATE_ID": "OCG-MUCWW28AA",
+        "SITE": "",
+        "LANGUAGE": "",
+        "EXTERNAL_ID": "",
+        "SO_SITE_OFFICE_ID": "",
+        "SO_SITE_AMADEUS_OFFICE_ID": "",
+        "SO_SITE_POINT_OF_SALE": "",
+        "SO_SITE_IS_INSURANCE_ENABLED": "",
+        "SO_SITE_MOP_CREDIT_CARD_INS": ""
+    },
+    "xaa_global": {
+        "transaction_fare": {
+            "EMBEDDED_TRANSACTION": "Fare"
+        },
+        "saf_overrides": {
+            "CREATION_MODE": "30",
+            "PRICING_MODE": "0",
+            "FARE_COMMAND": "6",
+            "SO_SITE_ETCKT_AIRLINE_LIST": "TRUE"
+        },
+        "saf_segment": {
+            "B_LOCATION_": "",
+            "B_LOCATION_CITY_": "",
+            "E_LOCATION_": "",
+            "E_LOCATION_CITY_": "",
+            "B_DATE_": "",
+            "E_DATE_": "",
+            "AIRLINE_": "",
+            "FLIGHT_NUMBER_": "",
+            "RBD_": "",
+            "param_postfix": "_1"
+        },
+        "global_list_overrides": {
+            "data": "<GLOBAL_LIST mode=\"complete\"> <NAME>SITE_ETICKET_AIRLINES</NAME> <LIST_ELEMENT><CODE>AA</CODE></LIST_ELEMENT></GLOBAL_LIST>"
+        },
+        "saf_global_list_overrides": {
+            "data": "<GLOBAL_LIST mode=\"partial\"><NAME>SITE_SITE_FARE_COMMANDS_AND_OPTIONS</NAME><LIST_ELEMENT><CODE>6</CODE><LIST_VALUE>0</LIST_VALUE><LIST_VALUE>2</LIST_VALUE><LIST_VALUE>4</LIST_VALUE><LIST_VALUE null=\"true\"/><LIST_VALUE>0</LIST_VALUE><LIST_VALUE>FALSE</LIST_VALUE><LIST_VALUE>FALSE</LIST_VALUE><LIST_VALUE null=\"true\"/><LIST_VALUE null=\"true\"/><LIST_VALUE null=\"true\"/><LIST_VALUE>FALSE</LIST_VALUE><LIST_VALUE>FALSE</LIST_VALUE><LIST_VALUE>1</LIST_VALUE><LIST_VALUE>TRUE</LIST_VALUE></LIST_ELEMENT></GLOBAL_LIST>"
+        }
+    }
+};

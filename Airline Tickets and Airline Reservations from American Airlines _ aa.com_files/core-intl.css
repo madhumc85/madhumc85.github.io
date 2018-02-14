@@ -1,0 +1,97 @@
+@media screen and (min-width: 767px) {
+    /* Header alignment */
+    #aa-lang-ja #navigation ul li a#travel-information-expander { left: 52%; }
+
+    #aa-lang-ko #navigation ul li a#travel-information-expander,
+    #aa-lang-nl #navigation ul li a#travel-information-expander,
+    #aa-lang-ru #navigation ul li a#travel-information-expander { left: 53%; }
+
+    #aa-lang-de #navigation ul li a#travel-information-expander,
+    #aa-lang-fr #navigation ul li a#travel-information-expander,
+    #aa-lang-zh #navigation ul li a#travel-information-expander { left: 54%; }
+
+
+    #aa-lang-fi #navigation ul li a#travel-information-expander,
+    #aa-lang-it #navigation ul li a#travel-information-expander { left: 56%; }
+
+    /* Compatibility for headers with two lines */
+    #aa-lang-fr #main-navigation,
+    #aa-lang-it #main-navigation,
+    #aa-lang-ru #main-navigation {
+        margin-top: 30px;
+    }
+
+    #aa-lang-fr #navigation > ul > li > a,
+    #aa-lang-it #navigation > ul > li > a,
+    #aa-lang-ru #navigation > ul > li > a {
+        top: -73px;
+    	text-align: center;
+    }
+
+    #aa-lang-fr #site-nav li.menu-item,
+    #aa-lang-it #site-nav li.menu-item,
+    #aa-lang-ru #site-nav li.menu-item {
+        text-align: center;
+    }
+}
+
+/* Forcing country selector to open to the right */
+#countrySelector .js-dropdown-panel {
+    left: auto;
+    right: 6px;
+    position: absolute;
+}
+
+/* Prevent footer overrides in old template pages */
+footer#aa-footer {
+    margin: 60px 0 0 0;
+    width: inherit;
+}
+
+#standard_wrapper {
+	margin: 14px auto 18px;
+}
+
+/* Minomodule retrocompatibility */
+#miniModule select {
+	background-image: none;
+    padding: 0;
+	-webkit-appearance: menulist-button;
+	margin: 3px 0;
+}
+
+#miniModule .backing {
+	width: 375px;
+	left: -25px;
+}
+
+#minimodule-error {
+	left: 0;
+}
+
+/* Stablish same min-height for hp widgets */
+
+#home-page-widgets {
+    min-height: 28em;
+}
+
+#cookieConsentDialogClose.ui-dialog-titlebar-close {
+    display: none;
+}
+
+@media screen and (max-width: 767px) {
+    footer#aa-footer {
+        background-color: #627A88;
+        background-image: none;
+        color: #D0DAE0;
+        padding-bottom: 5px;
+    }
+
+    footer#aa-footer h2 {
+        color: #F5F5F7;
+    }
+
+    footer#aa-footer .container ul {
+        border-bottom: 0;
+    }
+}

@@ -1,0 +1,81 @@
+// ACG manager namespace
+Namespace.Manager.Register("com.aa.i11l.imp.ACGManager");
+
+com.aa.i11l.imp.ACGManager = function () {
+	this.raf = new com.aa.i11l.amadeus.eRetail.c.RegisterACGForm();
+	this.ddc = new com.aa.i11l.ui.smartUI.behaviour();
+};
+
+com.aa.i11l.imp.ACGManager.prototype.register = function (form, event) {
+	this.raf.register(form, event);
+};
+
+com.aa.i11l.imp.ACGManager.prototype.commonSetup = function () {
+	this.ddc.addDropDownControl();
+};
+
+Namespace.Manager.Register("com.aa.i11l.mappings.actionMapping");
+
+/** depend: First element is the name of the field which depends on another.
+			Second element is a condition.
+			The field will only be validated (according to the regexp in 'values' _if_ the condition is true. Condition is defined as: 'fieldName' equales/smaller than/bigger than 'value'. The comparison is either =, < or >.
+
+**/
+com.aa.i11l.mappings.actionMapping = {
+	"acgTest": {
+		"names": [],
+		"values": [],
+		"errors": []
+	},
+	"mcTest": {
+		"names": [],
+		"values": [],
+		"errors": []
+	},
+	"rail-acgTest": {
+		"names": [],
+		"values": [],
+		"errors": []
+	},
+	"promoSearch": {
+		"names": [],
+		"values": [],
+		"errors": []
+	},
+	"studentPromoSearch": {
+		"names": [],
+		"values": [],
+		"errors": []
+	},		
+	"miniModule": {
+		"names": [],
+		"values": [],
+		"errors": []
+	},
+	"bookingModule": {
+		"names": [],
+		"values": [],
+		"errors": []
+	}	
+};
+
+var ACGManager = new com.aa.i11l.imp.ACGManager();
+
+// Run common ACG setup functions
+ACGManager.commonSetup();
+
+// Register the acgTest form with the listener
+ACGManager.register('acgTest', 'submit');
+// Register the mcTest form with the listener
+ACGManager.register('mcTest', 'submit');
+// Register the rail&fly form with the listener
+ACGManager.register('rail-acgTest', 'submit');
+// Register the miniModule form with the listener
+ACGManager.register('miniModule', 'submit');
+// Register the promoSearch form with the listener
+ACGManager.register('promoSearch', 'submit');
+ACGManager.register('studentPromoSearch', 'submit');
+
+ACGManager.register('bookingModule', 'submit');
+
+

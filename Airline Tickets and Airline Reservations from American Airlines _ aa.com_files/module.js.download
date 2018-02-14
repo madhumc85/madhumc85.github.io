@@ -1,0 +1,1491 @@
+Namespace.Manager.Register("AAI11L.bookingModule");
+var m = AAI11L.bookingModule,
+    defaultLangRes = {},
+    langRes = {};
+defaultLangRes.error = {
+    ERROR_HEADER: "The following error(s) occurred:",
+    INVALID_DEP_CITY: "Please provide us with a departure city and try again.",
+    INVALID_RET_CITY: "Please provide us with a return city and try again.",
+    INVALID_DEP_DATE: "Departure date is missing.",
+    INVALID_RET_DATE: "Return date is missing.",
+    INVALID_PHIL_CITY: "Regulatory restrictions prevent American Airlines from selling travel departing from the Republic of the Philippines. Please amend your departure city."
+};
+m.error = {
+    errorEl: "bookingModule-error",
+    errorInputClass: "input-error",
+    errorTextClass: "errorMessage",
+    errorHeaderClass: "errorHeader"
+};
+m.error.ancillary = {
+    errorEl: "errorDiv",
+    errorElClass: "aa-sys-alert",
+    errorInputClass: "error",
+    errorTextClass: "textfont"
+};
+defaultLangRes.text = {
+    language: "en",
+    country: "IE",
+    locale: "en_IE",
+    datepicker: "en-GB",
+    pleaseSelect: "Please%20Select"
+};
+try {
+    langRes = com.aa.i11l.app.acg.resources.lang
+} catch (e) {
+    langRes = defaultLangRes
+}
+if (!langRes.text) {
+    langRes = defaultLangRes
+}
+AAI11L.bookingModule.dialogWidth = 1010;
+AAI11L.bookingModule.page = "";
+AAI11L.bookingModule.fields = {};
+AAI11L.bookingModule.getFieldValues = function() {
+    var a = m.form;
+    m.fields = {
+        action: a.attr("action"),
+        locale: jQuery("[name=locale]", a).val(),
+        origin: jQuery("[name=origin]", a).val(),
+        destination: jQuery("[name=destination]", a).val(),
+        date1: jQuery("[name=aa-leavingOn]", a).val(),
+        date2: jQuery("[name=aa-returningFrom]", a).val(),
+        adt: jQuery("[name=adults]", a).val(),
+        chd: jQuery("[name=children]", a).val(),
+        cabin: jQuery("[name=cabin]", a).val(),
+        deptime: jQuery("[name=departureTime]", a).val(),
+        rettime: jQuery("[name=returnTime]", a).val(),
+        triptype: jQuery("[name=tripTypeRadio]:checked", a).val(),
+        inf: jQuery("[name=infants]", a).val(),
+        searchtype: jQuery("[name=searchType]", a).val()
+    };
+    if (!m.fields.locale) {
+        m.fields.locale = langRes.text.locale || "en_IE";
+        a.append('<input type="hidden" name="locale" value="' + m.fields.locale + '" />')
+    }
+};
+AAI11L.bookingModule.addMissing = function() {
+    var a = m.form;
+    if (!m.fields.action) {
+        a.attr("action", "/i18n/footer/browserRequirements.jsp");
+        a.attr("method", "post")
+    }
+    if (!m.fields.deptime) {
+        a.append('<input type="hidden" name="departureTime" value="ANY" />')
+    }
+    if (!m.fields.rettime) {
+        a.append('<input type="hidden" name="returnTime" value="ANY" />')
+    }
+    if (!m.fields.cabin) {
+        a.append('<input type="hidden" name="cabin" value="E" />')
+    }
+    if (!m.fields.adt) {
+        a.append('<input type="hidden" name="adults" value="1" />')
+    }
+    if (!m.fields.chd) {
+        a.append('<input type="hidden" name="children" value="0" />')
+    }
+    if (m.type == "mc") {
+        a.append('<input type="hidden" name="flowType" value="flexPricerMultiCity" />')
+    } else {
+        a.append('<input type="hidden" name="flowType" value="flexPricer" />')
+    }
+    if (!m.fields.searchtype) {
+        a.append('<input type="hidden" name="searchType" value="flexSearch" />')
+    }
+    if (!m.fields.inf) {
+        a.append('<input type="hidden" name="infants" value="0" />')
+    }
+    a.append('<input type="hidden" name="tripType" value="R" />');
+    m.getFieldValues()
+};
+AAI11L.bookingModule.updateForm = function() {
+    var a = m.form;
+    if (m.type != "mc") {
+        jQuery(".showMc").remove()
+    } else {
+        jQuery(".hideMc").remove()
+    }
+    if (m.type != "aadv") {
+        jQuery(".showAadv").remove()
+    } else {
+        jQuery(".hideAadv").remove()
+    }
+    switch (m.fields.triptype) {
+        case "O":
+        case "oneWay":
+            if (m.type == "aadv") {
+                jQuery("[name=tripType]", a).val("oneWay")
+            } else {
+                jQuery("[name=tripType]", a).val("O")
+            }
+            break;
+        case "M":
+            jQuery("[name=tripType]", a).val("M");
+            break;
+        case "R":
+        case "roundTrip":
+        default:
+            if (m.type == "aadv") {
+                jQuery("[name=tripType]", a).val("roundTrip")
+            } else {
+                jQuery("[name=tripType]", a).val("R")
+            }
+            break
+    }
+    switch (m.fields.cabin) {
+        case "business-restricted":
+        case "business-fullfare":
+        case "first-restricted":
+        case "first-fullfare":
+        case "premium":
+        case "J":
+        case "F":
+        case "P":
+            jQuery("[name=cabin]", a).val("P");
+            break;
+        case "E":
+        case "economy":
+        case "coach-restricted":
+        case "coach-unrestricted":
+        case "coach-fullfare":
+        default:
+            jQuery("[name=cabin]", a).val("E");
+            break
+    }
+    jQuery("#departureDayID").remove();
+    jQuery("#departureMonthID").remove();
+    jQuery("#departureYearID").remove();
+    jQuery("#returnDayID").remove();
+    jQuery("#returnMonthID").remove();
+    jQuery("#returnYearID").remove();
+    jQuery("#departureDaySelect").remove();
+    jQuery("#departureMonthSelect").remove();
+    jQuery("#departureYearSelect").remove();
+    jQuery("#returnDaySelect").remove();
+    jQuery("#returnMonthSelect").remove();
+    jQuery("#returnYearSelect").remove();
+    if (m.type != "aadv") {
+        jQuery("[name=origin]", a).attr("name", "origin1");
+        jQuery("[name=destination]", a).attr("name", "destination1");
+        jQuery("[name=cabin]", a).attr("name", "classOfService");
+        jQuery("[name=adults]", a).attr("name", "numberOfAdults");
+        jQuery("[name=children]", a).attr("name", "numberOfChildren");
+        jQuery("[name=infants]", a).attr("name", "numberOfInfants");
+        if (m.type != "mc") {
+            jQuery("[name=departureTime]", a).attr("name", "departureTime1");
+            jQuery("[name=returnTime]", a).attr("name", "departureTime2")
+        }
+        a.append('<input type="hidden" name="date1" id="date1" value="" />');
+        a.append('<input type="hidden" name="date2" id="date2" value="" />');
+        if (m.type == "mc") {
+            a.attr("name", "mcTest");
+            a.attr("id", "mcTest");
+            a.append('<input type="hidden" name="date3" id="date3" value="" />');
+            a.append('<input type="hidden" name="date4" id="date4" value="" />');
+            a.append('<input type="hidden" name="date5" id="date5" value="" />');
+            a.append('<input type="hidden" name="date6" id="date6" value="" />');
+            jQuery("[name=searchType]", a).remove()
+        }
+    } else {
+        if (m.type == "aadv") {
+            a.attr("name", "reservationFlightSearchForm");
+            a.attr("id", "reservationFlightSearchForm");
+            var c = "en_US";
+            if (m.fields.locale == "ja_JP") {
+                c = "ja_JP"
+            }
+            if (m.fields.locale.indexOf("es_") > -1) {
+                c = "es_US"
+            }
+            a.attr("action", "/reservation/awardFlightSearchOptionsSubmit.do?locale=" + c);
+            jQuery("[name=origin]", a).attr("name", "originAirport");
+            jQuery("[name=destination]", a).attr("name", "destinationAirport");
+            jQuery("[name=cabin]", a).attr("name", "awardCabinClass");
+            jQuery("[name=adults]", a).attr("name", "adultPassengerCount");
+            jQuery("[name=children]", a).attr("name", "childPassengerCount");
+            jQuery("[name=infants]", a).attr("name", "numberOfInfants");
+            a.append('<input type="hidden" name="currentCodeForm" value="" />');
+            a.append('<input type="hidden" name="flightSearch" value="award" />');
+            a.append('<input type="hidden" name="currentCalForm" value="dep" />');
+            a.append('<input type="hidden" name="advancedSearchOpened" value="false" />');
+            a.append('<input type="hidden" name="aairpassSearchType" value="false" />');
+            a.append('<input type="hidden" name="searchCategory" value="award"/>');
+            a.append('<input type="hidden" name="searchTypeMode" value="matrix" />');
+            a.append('<input type="hidden" name="awardType" value="M" />');
+            a.append('<input type="hidden" name="awardDatesFlexible" value="true" />');
+            var b = jQuery("#aa-leavingOn").datepicker("getDate"),
+                g = jQuery("#aa-returningFrom").datepicker("getDate");
+            if (b) {
+                a.append('<input type="hidden" name="flightParams.flightDateParams.travelDay" value="' + b.getDate() + '" />');
+                a.append('<input type="hidden" name="flightParams.flightDateParams.travelMonth" value="' + (b.getMonth() + 1) + '" />')
+            }
+            if (g) {
+                a.append('<input type="hidden" name="returnDate.travelDay" value="' + g.getDate() + '" />');
+                a.append('<input type="hidden" name="returnDate.travelMonth" value="' + (g.getMonth() + 1) + '" />')
+            }
+            jQuery("[name=searchType],[name=departureTime],[name=returnTime],[name=date1],[name=date2],[name=flowType],[name=numbreOfInfants]", a).remove()
+        }
+    }
+    m.handleDate()
+};
+AAI11L.bookingModule.validate = function(q) {
+    try {
+        var n = m.form;
+        var l = [],
+            s = [];
+        var j = decodeURIComponent(langRes.text.pleaseSelect),
+            c = /[a-z\s\u00e0-\u00ef\u00f1-\u00f6\u00f8-\u00fc]$/i,
+            t = jQuery("[name=origin]", n),
+            o = jQuery("[name=destination]", n),
+            g = jQuery("#aa-leavingOn"),
+            p = jQuery("#aa-returningFrom"),
+            k = t.val() > "",
+            h = o.val() > "",
+            b = g.datepicker("getDate"),
+            a = p.datepicker("getDate");
+        dateFilled = (g.val() > "") && (g.val() != j) && (b != null) && (g.val().indexOf("yy") == -1), dateFilled2 = (p.val() > "") && (p.val() != j) && (a != null) && (p.val().indexOf("yy") == -1), errMsg = "", oneway = (m.fields.triptype == "O" || m.fields.triptype == "oneWay");
+        if (k) {
+            k = c.test(t.val())
+        }
+        if (h) {
+            h = c.test(o.val())
+        }
+        if (!k) {
+            l.push(t.attr("name"));
+            s.push(errMsg + langRes.error.INVALID_DEP_CITY)
+        }
+        if (!h) {
+            l.push(o.attr("name"));
+            s.push(errMsg + langRes.error.INVALID_RET_CITY)
+        }
+        if (!dateFilled) {
+            l.push(g.attr("name"));
+            s.push(errMsg + langRes.error.INVALID_DEP_DATE)
+        }
+        if ((!oneway) && (!dateFilled2)) {
+            l.push(p.attr("name"));
+            s.push(errMsg + langRes.error.INVALID_RET_DATE)
+        }
+        if (t.val() == "MNL" || t.val() == "CEB") {
+            l.push(t.attr("name"));
+            s.push(langRes.error.INVALID_PHIL_CITY)
+        }
+
+        if (s.length > 0) {
+            m.apiErrOut(s, l);
+            q.preventDefault();
+            q.stopImmediatePropagation();
+            return false
+        }
+        return true
+    } catch (q) {
+        return false
+    }
+};
+AAI11L.bookingModule.validateMC = function(j) {
+    try {
+        var c = m.form,
+            a = [],
+            k = [],
+            b = [],
+            h = false,
+            g = decodeURIComponent(langRes.text.pleaseSelect),
+            l = /[a-z\s\u00e0-\u00ef\u00f1-\u00f6\u00f8-\u00fc]$/i;
+        if (jQuery("#mc1F_hidden").val() == "MNL" || jQuery("#mc1F_hidden").val() == "CEB") {
+            a.push("origin1");
+            k.push(langRes.error.INVALID_PHIL_CITY)
+        }
+        jQuery("#mcTable tr").each(function(n, f) {
+            if (jQuery("input.mcFromInput", f).length > 0) {
+                b.push(jQuery(f))
+            }
+        });
+        b = jQuery(b);
+        b.each(function(n, p) {
+            var f = (n + 1);
+            fromField = jQuery("#mc" + f + "F"), toField = jQuery("#mc" + f + "T"), dateField = jQuery("#mc" + f + "D"), fromFilled = fromField.val() > "", toFilled = toField.val() > "", fromField_hidden = jQuery("#mc" + f + "F_hidden"), toField_hidden = jQuery("#mc" + f + "T_hidden"), d = dateField.datepicker("getDate"), dateFilled = (dateField.val() > "") && (dateField.val() != g) && (d != null) && (dateField.val().indexOf("yy") == -1), errMsg = "";
+            if (fromFilled) {
+                fromFilled = l.test(fromField_hidden.val())
+            }
+            if (toFilled) {
+                toFilled = l.test(toField_hidden.val())
+            }
+            if (!((fromFilled && toFilled && dateFilled) || (!fromFilled && !toFilled && !dateFilled))) {
+                errMsg = langRes.error.mcSegment + (n + 1) + ": ";
+                if (!fromFilled) {
+                    a.push(fromField.attr("name"));
+                    k.push(errMsg + langRes.error.INVALID_DEP_CITY)
+                }
+                if (!toFilled) {
+                    a.push(toField.attr("name"));
+                    k.push(errMsg + langRes.error.INVALID_RET_CITY)
+                }
+                if (!dateFilled) {
+                    a.push(dateField.attr("name"));
+                    k.push(errMsg + langRes.error.INVALID_DEP_DATE)
+                }
+            }
+            if (!fromFilled && !toFilled && !dateFilled) {
+                h = n;
+                if (n == 0) {
+                    a.push(fromField.attr("name"));
+                    a.push(toField.attr("name"));
+                    a.push(dateField.attr("name"));
+                    errMsg = langRes.error.mcSegment + f + ": ";
+                    k.push(errMsg + langRes.error.INVALID_DEP_CITY);
+                    k.push(errMsg + langRes.error.INVALID_RET_CITY);
+                    k.push(errMsg + langRes.error.INVALID_DEP_DATE)
+                }
+            }
+            if ((fromFilled || toFilled || dateFilled) && (h !== false)) {
+                var o = (h + 1);
+                errMsg = langRes.error.mcSegment + o + ": ";
+                jQuery("#mc" + o + "F, #mc" + o + "T, #mc" + o + "D").each(function(q, r) {
+                    a.push(jQuery(r).attr("name"))
+                });
+                k.push(errMsg + langRes.error.INVALID_DEP_CITY);
+                k.push(errMsg + langRes.error.INVALID_RET_CITY);
+                k.push(errMsg + langRes.error.INVALID_DEP_DATE);
+                h = false
+            }
+        });
+        if (k.length > 0) {
+            m.apiErrOut(k, a);
+            j.preventDefault();
+            j.stopImmediatePropagation();
+            return false
+        }
+        return true
+    } catch (j) {
+        return false
+    }
+};
+AAI11L.bookingModule.apiErrOut = function(b, l, a) {
+    var o = m.form,
+        g = [];
+    if (a > "") {
+        o = jQuery("#" + a)
+    }
+    if (o.length == 0) {
+        o = jQuery("form:visible")
+    }
+    if (o.length == 0) {
+        o = jQuery("body")
+    }
+    var c = jQuery("body");
+    if (m.page == "index") {
+        c = jQuery("div.site-content-hero")
+    }
+    if (m.page == "moresearch") {
+        c = jQuery("#aa-pageTitle")
+    }
+    if (c.length == 0) {
+        c = jQuery("body")
+    }
+    m.removeErrorMsg();
+    if (jQuery("#" + m.error.errorEl).length == 0) {
+        c.prepend('<div id="' + m.error.errorEl + '"></div>')
+    }
+    g.push('<span class="' + m.error.errorHeaderClass + '">');
+    g.push(langRes.error.ERROR_HEADER);
+    g.push('</span><a style="display:inline-block" href="javascript:void(0);" id="errorClose" onclick="m.removeErrorMsg();"><i class="icon icon-18 icon-cancel"></i></a><ul>');
+    for (var k = 0; k < l.length; k++) {
+        var h = l[k];
+        if (b[k] > "") {
+            g.push('<li class="' + m.error.errorTextClass + '">');
+            g.push(b[k]);
+            g.push("</li>")
+        }
+        if (h.indexOf("Day1") > -1) {
+            h = "aa-leavingOn"
+        } else {
+            if (h.indexOf("Day2") > -1) {
+                h = "aa-returningFrom"
+            }
+        }
+        var p = jQuery('[name="' + h + '"]', o);
+        if (p.length > 0) {
+            if (jQuery("#smartsearch_out_cont").length == 1) {
+                if (p.attr("id").indexOf("_hidden") > -1) {
+                    h += "_display";
+                    p = jQuery('[name="' + h + '"]', o)
+                }
+            }
+            p.addClass(m.error.errorInputClass)
+        }
+    }
+    g.push("</ul>");
+    jQuery("#" + m.error.errorEl).html(g.join(""));
+    if (m.page == "index") {
+        var j = parseInt((jQuery("#" + m.error.errorEl).outerHeight() + 10), 10) * -1;
+        jQuery("#" + m.error.errorEl).css("top", j + "px")
+    }
+};
+AAI11L.bookingModule.handleDate = function() {
+    var a = jQuery("input.aaDatePicker, input.calendar", m.form);
+    if (m.type == "mc") {
+        a = jQuery("table.showMc input.calendar", m.form)
+    }
+    a.each(function(j, c) {
+        var f = jQuery(c),
+            h = c.name,
+            g = f.datepicker("getDate"),
+            k = f.attr("rel");
+        if ((k == "") || (typeof k == "undefined")) {
+            k = h.replace("Local", "")
+        }
+        if (g != null) {
+            var b = jQuery("#" + k, m.form);
+            b.val(g.getDate() + "/" + (g.getMonth() + 1) + "/" + g.getFullYear())
+        }
+    })
+};
+AAI11L.bookingModule.handleAADV = function() {
+    jQuery("#flightSearchForm\\.tripType\\.redeemMiles").click(function(a) {
+        jQuery('[name="adults"], [name="children"]').each(function() {
+            this.selectedIndex = 0;
+            jQuery(this).change()
+        });
+        if (this.checked) {
+            jQuery(".aadvOptions").show();
+            jQuery(".aadvOptions-hide").hide();
+            jQuery(".aadvOptions-invisible").addClass("invisible");
+            jQuery(".aadvOptions-disable input, .aadvOptions-disable select").addClass("disabled");
+            jQuery(".aadvOptions-disable input, .aadvOptions-disable select").attr("disabled", "disabled");
+            jQuery("#aadv-warning, #mcaadv-warning").show()
+        } else {
+            jQuery(".aadvOptions").hide();
+            jQuery(".aadvOptions-hide").show();
+            jQuery(".aadvOptions-invisible").removeClass("invisible");
+            jQuery(".aadvOptions-disable input, .aadvOptions-disable select").removeClass("disabled");
+            jQuery(".aadvOptions-disable input, .aadvOptions-disable select").removeAttr("disabled");
+            jQuery("#aadv-warning, #mcaadv-warning").hide()
+        }
+    })
+};
+AAI11L.bookingModule.handleOLCI = function() {
+    function b(n, l) {
+        var a = n.getDate();
+        var k = n.getMonth() + 1;
+        var j = n.getFullYear();
+        if (a < 10) {
+            a = "0" + a
+        }
+        if (k < 10) {
+            k = "0" + k
+        }
+        jQuery("#" + l + "-departureDate").val(k + "/" + a + "/" + j);
+        jQuery("#" + l + "-departureDay").val(a);
+        jQuery("#" + l + "-departureMonth").val(k)
+    }
+    jQuery("#olci-submit").click(function(a) {
+        if (m.validateOLCI(a)) {
+            try {
+                _gaq.push(["_linkByPost", this.form])
+            } catch (a) {} /*var f=jQuery("#findReservationForm\\.leavingOn").datepicker("getDate");if(f instanceof Date){b(f,"checkin")}*/
+            jQuery(this.form).submit()
+        }
+    });
+    jQuery("#gatesTimesForm\\.submit").click(function(a) {
+        if (m.validateFS(a)) {
+            try {
+                _gaq.push(["_linkByPost", this.form])
+            } catch (a) {}
+            jQuery(this.form).submit()
+        }
+    });
+    jQuery("#prs-submit").click(function(a) {
+        if (m.validatePrsFormSelect(a)) {
+            try {
+                _gaq.push(["_linkByPost", document.getElementById("prs-findReservationForm")])
+            } catch (a) {} /*var f=jQuery("#retr-leavingOn").datepicker("getDate");if(f instanceof Date){b(f,"prs")}*/
+            jQuery("#prs-findReservationForm").submit()
+        }
+    });
+    jQuery("#trip-submit").click(function(a) {
+        if (m.validatePrsFormManage(a)) {
+            try {
+                _gaq.push(["_linkByPost", document.getElementById("managemytripForm")]);
+                console.log(jQuery("#retr-leavingOn"))
+            } catch (a) {}
+            jQuery("#managemytripForm").submit()
+        }
+    })
+};
+AAI11L.bookingModule.validatePrsFormSelect = function(g) {
+    try {
+        var c = jQuery("#retr-firstName"),
+            f = jQuery("#retr-lastName"),
+            h = jQuery("#retr-recordLocator"),
+            a = jQuery("#retr-leavingOn"),
+            b = [],
+            r = [];
+        AAI11L.bookingModule.removeErrorMsg();
+        if (f.val() === "") {
+            r.push(langRes.error.checkinLastName);
+            b.push(f.attr("name"))
+        }
+        if (c.val() === "") {
+            r.push(langRes.error.checkinFirstName);
+            b.push(c.attr("name"))
+        }
+        if (h.val().match(/[a-zA-Z]{6}/) === null) {
+            r.push(langRes.error.checkinPNR);
+            b.push(h.attr("name"))
+        }
+        if (a.val() === "") {
+            r.push(langRes.error.INVALID_DEP_DATE);
+            b.push(a.attr("name"))
+        }
+        jQuery("#prs-firstName").val(c.val()), jQuery("#prs-lastName").val(f.val()), jQuery("#prs-recordLocator").val(h.val());
+        jQuery("#lastname").val(f.val()), jQuery("#reservationNr").val(h.val());
+        if (r.length > 0) {
+            AAI11L.bookingModule.apiErrOut(r, b, "combinedForm");
+            g.preventDefault();
+            g.stopImmediatePropagation();
+            return false
+        }
+        return true
+    } catch (g) {
+        return false
+    }
+};
+AAI11L.bookingModule.validatePrsFormManage = function(g) {
+    try {
+        var c = jQuery("#retr-firstName"),
+            f = jQuery("#retr-lastName"),
+            h = jQuery("#retr-recordLocator"),
+            b = [],
+            a = [];
+        AAI11L.bookingModule.removeErrorMsg();
+        if (f.val() === "") {
+            a.push(langRes.error.checkinLastName);
+            b.push(f.attr("name"))
+        }
+        if (c.val() === "") {
+            a.push(langRes.error.checkinFirstName);
+            b.push(c.attr("name"))
+        }
+        if (h.val().match(/[a-zA-Z]{6}/) === null) {
+            a.push(langRes.error.checkinPNR);
+            b.push(h.attr("name"))
+        }
+        jQuery("#prs-firstName").val(c.val()), jQuery("#prs-lastName").val(f.val()), jQuery("#prs-recordLocator").val(h.val());
+        jQuery("#lastname").val(f.val()), jQuery("#reservationNr").val(h.val());
+        if (a.length > 0) {
+            AAI11L.bookingModule.apiErrOut(a, b, "combinedForm");
+            g.preventDefault();
+            g.stopImmediatePropagation();
+            return false
+        }
+        return true
+    } catch (g) {
+        return false
+    }
+};
+AAI11L.bookingModule.validateOLCI = function(g) {
+    try {
+        var c = jQuery("#findReservationForm\\.firstName"),
+            f = jQuery("#findReservationForm\\.lastName"),
+            h = jQuery("#findReservationForm\\.recordLocator"),
+            a = jQuery("#findReservationForm\\.leavingOn"),
+            b = [],
+            r = [];
+        AAI11L.bookingModule.removeErrorMsg();
+        if (f.val() === "") {
+            r.push(langRes.error.checkinLastName);
+            b.push(f.attr("name"))
+        }
+        if (c.val() === "") {
+            r.push(langRes.error.checkinFirstName);
+            b.push(c.attr("name"))
+        }
+        if (h.val().match(/[a-zA-Z]{6}/) === null) {
+            r.push(langRes.error.checkinPNR);
+            b.push(h.attr("name"))
+        }
+        if (a.val() === "") {
+            r.push(langRes.error.INVALID_DEP_DATE);
+            b.push(a.attr("name"))
+        }
+        if (r.length > 0) {
+            AAI11L.bookingModule.apiErrOut(r, b, "findReservationForm");
+            g.preventDefault();
+            g.stopImmediatePropagation();
+            return false
+        }
+        return true
+    } catch (g) {
+        return false
+    }
+};
+AAI11L.bookingModule.validateFS = function(g) {
+    try {
+        var c = jQuery("#gatesTimesSearchForm\\.originAirport"),
+            b = jQuery("#gatesTimesSearchForm\\.destinationAirport"),
+            h = jQuery("#aa-flightNumber-fs"),
+            f = [],
+            a = [];
+        AAI11L.bookingModule.removeErrorMsg();
+        if ((h.val() === "") && (jQuery("#gatesTimesForm\\.travelDate")[0].selectedIndex == 0)) {
+            a.push(langRes.error.fsModuleError);
+            f.push(h.attr("name"))
+        }
+        if ((c.val() === "") && (b.val() === "") && (h.val() === "")) {
+            a.push(langRes.error.fsModuleError2);
+            f.push(c.attr("name"));
+            f.push(b.attr("name"));
+            f.push(h.attr("name"))
+        } else {
+            if ((c.val() === "") && (b.val() !== "")) {
+                a.push(langRes.error.INVALID_DEP_CITY);
+                f.push(c.attr("name"))
+            } else {
+                if ((b.val() === "") && (c.val() !== "")) {
+                    a.push(langRes.error.INVALID_RET_CITY);
+                    f.push(b.attr("name"))
+                } else {
+                    if ((b.val() === c.val()) && ((c.val() !== "") && (b.val() !== ""))) {
+                        a.push(langRes.error.INVALID_DEP_CITY);
+                        a.push(langRes.error.INVALID_RET_CITY);
+                        f.push(c.attr("name"));
+                        f.push(b.attr("name"))
+                    }
+                }
+            }
+        }
+        if (a.length > 0) {
+            AAI11L.bookingModule.apiErrOut(a, f, "gatesTimesForm");
+            g.preventDefault();
+            g.stopImmediatePropagation();
+            return false
+        }
+        return true
+    } catch (g) {
+        return false
+    }
+};
+AAI11L.bookingModule.init = function() {
+    m.page = "index";
+    m.form = jQuery("#bookingModule");
+    m.handleAADV();
+    m.handleOLCI();
+    m.mmtConfig();
+    m.removeDateOptions();
+	m.cubanAlert();
+    m.paxNumber();
+    jQuery('[name="adults"]').change();
+    jQuery("div.aa-normal-booking").show();
+    jQuery("#origin_display, #destination_display, #origin_hidden, #destination_hidden").blur().val("");
+    jQuery("#ui-datepicker-div").show().hide();
+    jQuery("#bookingModule-submit").click(function(a) {
+        var c = false;
+        m.getFieldValues();
+        m.addMissing();
+        c = m.validate(a);
+        var b = document.getElementById("flightSearchForm.tripType.redeemMiles");
+        if (b && b.checked) {
+            m.type = "aadv"
+        }
+        if (c && (langRes.text.country == "KR")) {
+            jQuery("#agreementBookingDialog").dialog("close");
+            if (!jQuery("#agreementBookingDialog").data("continue")) {
+                AAI11L.bookingModule.showAgreement(a.target);
+                c = false
+            }
+            //jQuery("#agreementBookingDialog").data("continue", false)
+        }
+
+		var cubanAirports = ['SNU', 'VRA', 'HOG', 'CMW', 'CFG', 'HAV'];
+
+		var inputs = [
+			'#reservationFlightSearchForm\\.originAirport',
+			'#reservationFlightSearchForm\\.destinationAirport',
+			'#origin_display',
+			'#destination_display'
+		];
+
+		var airportFound = false;
+		for (var i = 0; i < inputs.length; ++i) {
+			if( jQuery(inputs[i]).length ) {
+				for(var airportIndex = 0; airportIndex < cubanAirports.length; airportIndex++){
+					if(jQuery(inputs[i]).val().toUpperCase().indexOf(cubanAirports[airportIndex]) > -1) {
+					   airportFound = true;
+					}
+				}
+			}
+		}
+
+		if (c && airportFound) {
+            jQuery("#cubanAlertDialog").dialog("close");
+            if (!jQuery("#cubanAlertDialog").data("continue")) {
+                AAI11L.bookingModule.showCubanAlert(a.target);
+                c = false
+            }
+            //jQuery("#cubanAlert").data("continue", false)
+        }
+        if (c) {
+            m.updateForm();
+            if (m.type != "aadv") {
+                m.form.submit()
+            } else {
+                if (m.form[0]) {
+                    try {
+                        _gaq.push(["_linkByPost", m.form[0]])
+                    } catch (a) {}
+                    m.form[0].submit()
+                }
+            }
+        }
+    });
+    jQuery("#flightSearchForm\\.tripType\\.roundTrip, #flightSearchForm\\.tripType\\.oneWay").click(function(a) {
+        jQuery("div.aa-normal-booking").show()
+    });
+    /*jQuery("#flightSearchForm\\.tripType\\.oneWay").click(function(a) {
+        jQuery("#aa-returningFrom").datepicker("setDate", null).blur()
+    });*/
+    jQuery("#tabs .menu-item").click(function() {
+        m.removeErrorMsg();
+        jQuery("#aadv-warning").hide();
+        jQuery("#olci-warning").hide();
+        jQuery("#flightSearchForm\\.tripType\\.roundTrip").click();
+        if (jQuery("#flightSearchForm\\.tripType\\.redeemMiles")[0]) {
+            jQuery("#flightSearchForm\\.tripType\\.redeemMiles")[0].checked = false;
+            jQuery("#flightSearchForm\\.tripType\\.redeemMiles").parents("label.prettify.selected").removeClass("selected")
+        }
+    })
+};
+AAI11L.bookingModule.initMore = function() {
+    m.page = "moresearch";
+    AAI11L.bookingModule.dialogWidth = 700;
+    AAI11L.bookingModule.handleTabs(); /*AAI11L.bookingModule.moreSearchClearField();*/
+    jQuery(".returnTab").click();
+    m.form = jQuery("#bookingModule");
+    m.paxNumber(true);
+    jQuery('[name="adults"]').change();
+    if (langRes.text.country == "DE") {
+        m.handleRail()
+    }
+    jQuery.widget("ui.dialog", jQuery.extend({}, jQuery.ui.dialog.prototype, {
+        _title: function(title) {
+            if (!this.options.title ) {
+                title.html("&#160;");
+            } else {
+                title.html(this.options.title);
+            }
+        }
+    }));
+	m.cubanAlert();
+    jQuery('input[id*="_hidden"], input.smartInput').blur().val("");
+    jQuery("#ui-datepicker-div").show().hide();
+    if (jQuery.browser.msie) {
+        jQuery("div").css("zoom", "0").css("zoom", "1")
+    }
+    jQuery("#mcTable .calendar, #multiCitySearch .calendar").datepicker("option", "onSelect", function(a, h) {
+        var g = this.form,
+            c = jQuery(this);
+        cArr = jQuery("input.calendar", g).toArray(), i = cArr.indexOf(this);
+        if (((c.datepicker("getDate") != null) || (c.val().indexOf("yy") == -1)) && (cArr.length > (i + 1))) {
+            var b = jQuery(cArr[i + 1]);
+            b.datepicker("option", "minDate", a);
+            if (b.val() == c.val()) {
+                b.datepicker("setDate", null)
+            }
+        }
+    });
+    jQuery("#bookingModule-submit").click(function(b) {
+        var a = false;
+        m.getFieldValues();
+        m.addMissing();
+        m.updateTriptype();
+        m.updateSearchtype();
+        m.updateCabin();
+        if (m.type != "mc") {
+            a = m.validate(b)
+        } else {
+            a = m.validateMC(b)
+        }
+        if (jQuery.browser.msie) {
+            jQuery("div").css("zoom", "0").css("zoom", "1")
+        }
+        if (a && (langRes.text.country == "KR")) {
+            jQuery("#agreementBookingDialog").dialog("close");
+            if (!jQuery("#agreementBookingDialog").data("continue")) {
+                AAI11L.bookingModule.showAgreement(b.target);
+                a = false
+            }
+            //jQuery("#agreementBookingDialog").data("continue", false)
+        }
+
+		var cubanAirports = ['SNU', 'VRA', 'HOG', 'CMW', 'CFG', 'HAV'];
+
+		var airportFound = false;
+        for(var airportIndex = 0; airportIndex < cubanAirports.length; airportIndex++){
+            jQuery('input.smartInput').each(function() {
+                if(jQuery(this).val().toUpperCase().indexOf(cubanAirports[airportIndex]) > -1) {
+                   airportFound = true;
+                }
+            });
+        }
+
+		if (a && airportFound) {
+            jQuery("#cubanAlertDialog").dialog("close");
+            if (!jQuery("#cubanAlertDialog").data("continue")) {
+                AAI11L.bookingModule.showCubanAlert(b.target);
+                a = false
+            }
+            //jQuery("#cubanAlert").data("continue", false)
+        }
+        if (a) {
+            m.updateForm();
+            m.form.submit()
+        }
+    })
+};
+AAI11L.bookingModule.handleRail = function() {
+    jQuery('input[name="railwaystation"]').change(function(h) {
+        if (this.id != "mc-rail") {
+            var b = jQuery(this);
+            if (this.id == "from-rail") {
+                var j = jQuery("#to-rail"),
+                    a = jQuery("#origin_display"),
+                    k = jQuery("#origin_display_hidden"),
+                    g = jQuery("#destination_display"),
+                    c = jQuery("#destination_display_hidden")
+            } else {
+                var j = jQuery("#from-rail");
+                a = jQuery("#destination_display"), k = jQuery("#destination_display_hidden"), g = jQuery("#origin_display"), c = jQuery("#origin_display_hidden")
+            }
+            if (this.checked) {
+                a.attr("disabled", "disabled").addClass("disabled").val(langRes.text.railway);
+                k.val("QYG");
+                if (j.length == 1) {
+                    g.val("").removeAttr("disabled").removeClass("disabled");
+                    c.val("");
+                    j[0].checked = false
+                }
+            } else {
+                a.val("").removeAttr("disabled").removeClass("disabled");
+                k.val("")
+            }
+        }
+        if (this.id == "mc-rail") {
+            mcRows = jQuery("tr[id*=mcRow]");
+            var f = 2;
+            mcRows.each(function(n, o) {
+                var l = (n + 1);
+                fromField = jQuery("#mc" + l + "F"), toField = jQuery("#mc" + l + "T"), fromFilled = fromField.val() > "", toFilled = toField.val() > "";
+                if (fromFilled) {
+                    if (fromFilled && toFilled) {
+                        f = (l + 1)
+                    } else {
+                        f = (l)
+                    }
+                }
+            });
+            if (f == 1) {
+                f = 2
+            }
+            if (f > 6) {
+                f = 6
+            }
+            if (this.checked) {
+                jQuery("#flightLabel1, #flightLabel" + f).hide();
+                jQuery("#railLabel1, #railLabel" + f).show();
+                jQuery("#mc1F, #mc" + f + "T").attr("disabled", "disabled").addClass("disabled").val(langRes.text.railway);
+                jQuery("#mc1F_hidden, #mc" + f + "T_hidden").val("QYG")
+            } else {
+                jQuery(".mcToInput.disabled").siblings("input").val("");
+                jQuery("#mc1F, .mcToInput.disabled").val("").removeAttr("disabled").removeClass("disabled");
+                jQuery("#mc1F_hidden").val("");
+                jQuery(".mcRail").hide();
+                jQuery(".hideRail").show()
+            }
+        }
+
+        // if (s.length > 0) {
+            m.apiErrOut(s, l);
+            // q.preventDefault();
+            // q.stopImmediatePropagation();
+            // return false
+        // }
+    })
+};
+AAI11L.bookingModule.updateTriptype = function() {
+    if (m.type == "return") {
+        m.fields.triptype = "R"
+    } else {
+        if (m.type == "oneway") {
+            m.fields.triptype = "O"
+        } else {
+            if (m.type == "mc") {
+                m.fields.triptype = "M"
+            }
+        }
+    }
+};
+AAI11L.bookingModule.updateSearchtype = function() {
+    m.fields.searchtype = jQuery("[name=searchType]:checked", m.form).val()
+};
+AAI11L.bookingModule.updateCabin = function() {
+    m.fields.cabin = jQuery("[name=cabinRadio]:checked", m.form).val()
+};
+AAI11L.bookingModule.handleTabs = function() {
+    m.type = "return";
+    jQuery(".returnTab, .onewayTab, .mcTab, .aadvTab").click(function(b) {
+        m.removeErrorMsg();
+        var a = jQuery(this).attr("class").replace(/moduleTab(Bg)*(Off)*/g, "").trim();
+        m.type = a.replace("Tab", "");
+        if (m.type != "aadv") {
+            jQuery(".hideAadv").show();
+            jQuery(".showAadv").hide();
+            jQuery(".aadvTab.moduleTabBg").removeClass("moduleTabBg").addClass("moduleTabBgOff");
+            jQuery(".aadvTab.moduleTab").removeClass("moduleTab").addClass("moduleTabOff")
+        } else {
+            jQuery(".hideAadv").hide();
+            jQuery(".showAadv").show();
+            jQuery("#awardFlightSearchForm\\.tripType\\.roundTrip").click()
+        }
+        if (m.type != "mc") {
+            jQuery(".hideMc").show();
+            jQuery(".showMc").hide();
+            jQuery(".mcTab.moduleTabBg").removeClass("moduleTabBg").addClass("moduleTabBgOff");
+            jQuery(".mcTab.moduleTab").removeClass("moduleTab").addClass("moduleTabOff")
+        } else {
+            jQuery(".hideMc").hide();
+            jQuery(".showMc").show()
+        }
+        if (m.type != "return") {
+            jQuery(".returnTab.moduleTabBg").removeClass("moduleTabBg").addClass("moduleTabBgOff");
+            jQuery(".returnTab.moduleTab").removeClass("moduleTab").addClass("moduleTabOff")
+        } else {
+            jQuery(".hideOw").show()
+        }
+        if (m.type != "oneway") {
+            jQuery(".onewayTab.moduleTabBg").removeClass("moduleTabBg").addClass("moduleTabBgOff");
+            jQuery(".onewayTab.moduleTab").removeClass("moduleTab").addClass("moduleTabOff")
+        } else {
+            jQuery(".hideOw").hide()
+        }
+        jQuery("." + a + ".moduleTabBgOff").addClass("moduleTabBg").removeClass("moduleTabBgOff");
+        jQuery("." + a + ".moduleTabOff").addClass("moduleTab").removeClass("moduleTabOff");
+        if (jQuery.browser.msie) {
+            jQuery("div").css("zoom", "0").css("zoom", "1")
+        }
+        b.preventDefault();
+        return false
+    })
+};
+AAI11L.bookingModule.removeErrorMsg = function() {
+    jQuery("." + m.error.ancillary.errorInputClass).removeClass(m.error.ancillary.errorInputClass);
+    jQuery("#" + m.error.ancillary.errorEl + " span").remove();
+    jQuery("#" + m.error.ancillary.errorEl).remove();
+    jQuery("." + m.error.errorInputClass).removeClass(m.error.errorInputClass);
+    jQuery("." + m.error.errorTextClass).remove();
+    jQuery("#" + m.error.errorEl).remove();
+    if (jQuery.browser.msie) {
+        jQuery("div").css("zoom", "0").css("zoom", "1")
+    }
+};
+AAI11L.bookingModule.removeDateOptions = function() {
+	var r = (new com.aa.i11l.utils.date).isItTodayInDallas(),
+		g = jQuery("#gatesTimesForm\\.travelDate").children(),
+		o = new Date(),
+		l = jQuery.datepicker._defaults.dateFormat.indexOf("mm") < jQuery.datepicker._defaults.dateFormat.indexOf("dd"),
+		j = decodeURIComponent(langRes.text.daySuffix || ""),
+        h = decodeURIComponent(langRes.text.monthSuffix || "");
+
+	function createOptions(dates) {
+		var result = "";
+
+		for (var i = 0; i < dates.length; i++) {
+			var d = dates[i],
+				k = d.getDate(),
+				p = jQuery.datepicker._defaults.monthNames[d.getMonth()] + h,
+				s = jQuery.datepicker._defaults.dayNames[d.getDay()],
+				n = jQuery.datepicker.regional['en-GB'].monthNames[d.getMonth()],
+				f = jQuery.datepicker.regional['en-GB'].dayNames[d.getDay()],
+				c = ("0" + k).slice(-2),
+				t = s + ", " + (l ? p + " " : "") + k + j + (l ? "" : " " + p),
+				v = f + ", " + n + " " + c;
+
+			result += '<option value="' + v + '">' + t + '</option>'
+		}
+
+		return result;
+	}
+
+	var optionDates = [
+		new Date(new Date(o.getTime() - (24 * 60 * 60 * 1000))),	// Yesterday
+		new Date(),													// Today
+		new Date(o.getTime() + (24 * 60 * 60 * 1000)),				// Tomorrow
+		new Date(o.getTime() + (48 * 60 * 60 * 1000))				// Day after tomorrow
+	];
+
+	g.remove().end().append(createOptions(optionDates)) ;
+
+    if (r == -1) {
+        jQuery(g[2]).remove()
+    } else {
+        if (r == 1) {
+            jQuery(g[0]).remove()
+        }
+    }
+
+    jQuery("#gatesTimesForm\\.travelDate").prop('selectedIndex', (g.length > 0) ? 1 : 0);
+};
+AAI11L.bookingModule.ancillaryError = function(k, b) {
+    var g = [];
+    m.removeErrorMsg();
+    var h = jQuery("#searchmodule form").first();
+    if (h.length == 0) {
+        h = jQuery("body")
+    }
+    if (jQuery("#" + m.error.ancillary.errorEl).length == 0) {
+        h.prepend('<div id="' + m.error.ancillary.errorEl + '"></div>')
+    }
+    g.push('<span class="' + m.error.ancillary.errorTextClass + '">');
+    g.push(langRes.error.ERROR_HEADER);
+    g.push("<br>");
+    for (var a = 0; a < b.length; a++) {
+        var j = b[a];
+        if (k[a] > "") {
+            g.push(k[a]);
+            g.push("<br>")
+        }
+        if (j.indexOf("Day1") > -1) {
+            j = "aa-leavingOn"
+        } else {
+            if (j.indexOf("Day2") > -1) {
+                j = "aa-returningFrom"
+            }
+        }
+        var c = jQuery('[name="' + j + '"]', h);
+        if (c.length > 0) {
+            if (jQuery("#smartsearch_out_cont").length == 1) {
+                if (c.attr("id").indexOf("_hidden") > -1) {
+                    j += "_display";
+                    c = jQuery('[name="' + j + '"]', h)
+                }
+            }
+            c.addClass(m.error.ancillary.errorInputClass)
+        }
+    }
+    g.push("</span>");
+    jQuery("#" + m.error.ancillary.errorEl).html(g.join("")).addClass(m.error.ancillary.errorElClass)
+};
+AAI11L.bookingModule.paxNumber = function(k) {
+    var a = m.form,
+        b = jQuery('[name="adults"]', a),
+        h = jQuery('[name="children"]', a),
+        j = jQuery('[name="infants"]', a),
+        g = b.add(h).add(j);
+    if (!k) {
+        var c = {};
+        for (var o = 0; o < h[0].options.length; o++) {
+            c[o] = {
+                val: h[0].options[o].value,
+                text: h[0].options[o].text
+            }
+        }
+        var n = {};
+        for (var o = 0; o < b[0].options.length; o++) {
+            n[(o + 1)] = {
+                val: b[0].options[o].value,
+                text: b[0].options[o].text
+            }
+        }
+    }
+    g.change(function(f) {
+        var q = 7;
+        var t = document.getElementById("flightSearchForm.tripType.redeemMiles");
+        if (t && t.checked) {
+            q = 6
+        }
+        var r = b.attr("id"),
+            u = h.attr("id"),
+            s = j.attr("id"),
+            p = new com.aa.i11l.ui.smartUI.behaviour();
+        if (this.id == r) {
+            p.bindSelects({
+                master: r,
+                slave: u,
+                maximum: q,
+                command: "decrement",
+                startAtZero: true,
+                rememberIndex: true,
+                optionsObj: c
+            });
+            if (j.length > 0) {
+                p.bindSelects({
+                    master: r,
+                    slave: s,
+                    maximum: q,
+                    command: "equal",
+                    startAtZero: true,
+                    rememberIndex: false
+                })
+            }
+        } else {
+            if (this.id == u) {
+                p.bindSelects({
+                    master: u,
+                    slave: r,
+                    maximum: q,
+                    command: "decrement",
+                    startAtZero: false,
+                    rememberIndex: true,
+                    optionsObj: n
+                })
+            }
+        }
+    });
+    if (m.page == "moresearch") {
+        var l = jQuery("#awardFlightSearchForm\\.adultPassengerCount, #awardFlightSearchForm\\.childPassengerCount");
+        l.change(function(f) {
+            var q = 6,
+                r = "awardFlightSearchForm.adultPassengerCount",
+                s = "awardFlightSearchForm.childPassengerCount",
+                p = new com.aa.i11l.ui.smartUI.behaviour();
+            if (this.id == r) {
+                p.bindSelects({
+                    master: r,
+                    slave: s,
+                    maximum: q,
+                    command: "decrement",
+                    startAtZero: true,
+                    rememberIndex: true
+                })
+            } else {
+                if (this.id == s) {
+                    p.bindSelects({
+                        master: s,
+                        slave: r,
+                        maximum: q,
+                        command: "decrement",
+                        startAtZero: false,
+                        rememberIndex: true
+                    })
+                }
+            }
+        })
+    }
+};
+AAI11L.bookingModule.validateAADV = function(q) {
+    try {
+        var n = jQuery("#awardFlightSearchForm");
+        var l = [],
+            s = [];
+        var j = decodeURIComponent(langRes.text.pleaseSelect),
+            c = /[a-z\s\u00e0-\u00ef\u00f1-\u00f6\u00f8-\u00fc]$/i,
+            t = jQuery("#awardFlightSearchForm\\.originAirport_hidden", n),
+            o = jQuery("#awardFlightSearchForm\\.destinationAirport_hidden", n),
+            g = jQuery("#adepartDate"),
+            p = jQuery("#areturnDate"),
+            k = t.val() > "",
+            h = o.val() > "",
+            b = g.datepicker("getDate"),
+            a = p.datepicker("getDate");
+        dateFilled = (g.val() > "") && (g.val() != j) && (b != null) && (g.val().indexOf("yy") == -1), dateFilled2 = (p.val() > "") && (p.val() != j) && (a != null) && (p.val().indexOf("yy") == -1), errMsg = "", oneway = jQuery("#awardFlightSearchForm\\.tripType\\.oneWay")[0].checked;
+        if (k) {
+            k = c.test(t.val())
+        }
+        if (h) {
+            h = c.test(o.val())
+        }
+        if (!k) {
+            l.push(t.attr("name"));
+            s.push(errMsg + langRes.error.INVALID_DEP_CITY)
+        }
+        if (!h) {
+            l.push(o.attr("name"));
+            s.push(errMsg + langRes.error.INVALID_RET_CITY)
+        }
+        if (!dateFilled) {
+            l.push(g.attr("name"));
+            s.push(errMsg + langRes.error.INVALID_DEP_DATE)
+        }
+        if ((!oneway) && (!dateFilled2)) {
+            l.push(p.attr("name"));
+            s.push(errMsg + langRes.error.INVALID_RET_DATE)
+        }
+        if (t.val() == "MNL" || t.val() == "CEB") {
+            l.push(t.attr("name"));
+            s.push(langRes.error.INVALID_PHIL_CITY)
+        }
+        if (s.length > 0) {
+            m.apiErrOut(s, l, "awardFlightSearchForm");
+            q.preventDefault();
+            q.stopImmediatePropagation();
+            return false
+        }
+        if (langRes.text.country == "KR") {
+            jQuery("#agreementBookingDialog").dialog("close");
+            if (!jQuery("#agreementBookingDialog").data("continue")) {
+                AAI11L.bookingModule.showAgreement(q.target);
+                return false
+            }
+            //jQuery("#agreementBookingDialog").data("continue", false)
+        }
+
+		var cubanAirports = ['SNU', 'VRA', 'HOG', 'CMW', 'CFG', 'HAV'];
+
+		var inputs = [
+			'#reservationFlightSearchForm\\.originAirport',
+			'#reservationFlightSearchForm\\.destinationAirport',
+			'#origin_display',
+			'#destination_display'
+		];
+
+		var airportFound = false;
+		for (var i = 0; i < inputs.length; ++i) {
+			if( jQuery(inputs[i]).length ) {
+				for(var airportIndex = 0; airportIndex < cubanAirports.length; airportIndex++){
+					if(jQuery(inputs[i]).val().toUpperCase().indexOf(cubanAirports[airportIndex]) > -1) {
+					   airportFound = true;
+					}
+				}
+			}
+		}
+
+		if (airportFound) {
+            jQuery("#cubanAlertDialog").dialog("close");
+            if (!jQuery("#cubanAlertDialog").data("continue")) {
+                AAI11L.bookingModule.showCubanAlert(a.target);
+                return false
+            }
+            //jQuery("#cubanAlert").data("continue", false)
+        }
+        return true
+    } catch (q) {
+        return false
+    }
+};
+AAI11L.bookingModule.validateAADVMC = function(j) {
+    try {
+        var c = jQuery("#awardFlightSearchForm"),
+            a = [],
+            k = [],
+            b = [],
+            h = false,
+            g = decodeURIComponent(langRes.text.pleaseSelect),
+            l = /[a-z\s\u00e0-\u00ef\u00f1-\u00f6\u00f8-\u00fc]$/i;
+        if (jQuery("#awardFlightSearchForm\\.multiCitySearchParam\\[0\\]\\.originAirport_hidden").val() == "MNL" || jQuery("#awardFlightSearchForm\\.multiCitySearchParam\\[0\\]\\.originAirport_hidden").val() == "CEB") {
+            a.push("multiCitySearchParam\\[0\\]\\.originAirport");
+            k.push(langRes.error.INVALID_PHIL_CITY)
+        }
+        jQuery("#multiCitySearch .fsTable tr").each(function(n, f) {
+            if (jQuery("input", f).length > 0) {
+                b.push(jQuery(f))
+            }
+        });
+        b = jQuery(b);
+        b.each(function(n, p) {
+            var f = n;
+            fromField = jQuery("#awardFlightSearchForm\\.multiCitySearchParam\\[" + f + "\\]\\.originAirport"), toField = jQuery("#awardFlightSearchForm\\.multiCitySearchParam\\[" + f + "\\]\\.destinationAirport"), dateField = jQuery("#amc" + (f + 1) + "D"), fromFilled = fromField.val() > "", toFilled = toField.val() > "", fromField_hidden = jQuery("#awardFlightSearchForm\\.multiCitySearchParam\\[" + f + "\\]\\.originAirport_hidden"), toField_hidden = jQuery("#awardFlightSearchForm\\.multiCitySearchParam\\[" + f + "\\]\\.destinationAirport_hidden"), d = dateField.datepicker("getDate"), dateFilled = (dateField.val() > "") && (dateField.val() != g) && (d != null) && (dateField.val().indexOf("yy") == -1), errMsg = "";
+            if (fromFilled) {
+                fromFilled = l.test(fromField_hidden.val())
+            }
+            if (toFilled) {
+                toFilled = l.test(toField_hidden.val())
+            }
+            if (!((fromFilled && toFilled && dateFilled) || (!fromFilled && !toFilled && !dateFilled))) {
+                errMsg = langRes.error.mcSegment + (n + 1) + ": ";
+                if (!fromFilled) {
+                    a.push(fromField.attr("name"));
+                    k.push(errMsg + langRes.error.INVALID_DEP_CITY)
+                }
+                if (!toFilled) {
+                    a.push(toField.attr("name"));
+                    k.push(errMsg + langRes.error.INVALID_RET_CITY)
+                }
+                if (!dateFilled) {
+                    a.push(dateField.attr("name"));
+                    k.push(errMsg + langRes.error.INVALID_DEP_DATE)
+                }
+            }
+            if (!fromFilled && !toFilled && !dateFilled) {
+                h = n;
+                if (n == 0) {
+                    a.push(fromField.attr("name"));
+                    a.push(toField.attr("name"));
+                    a.push(dateField.attr("name"));
+                    errMsg = langRes.error.mcSegment + (f + 1) + ": ";
+                    k.push(errMsg + langRes.error.INVALID_DEP_CITY);
+                    k.push(errMsg + langRes.error.INVALID_RET_CITY);
+                    k.push(errMsg + langRes.error.INVALID_DEP_DATE)
+                }
+            }
+            if ((fromFilled || toFilled || dateFilled) && (h !== false)) {
+                var o = (h + 1);
+                errMsg = langRes.error.mcSegment + o + ": ";
+                jQuery("#awardFlightSearchForm\\.multiCitySearchParam\\[" + (o - 1) + "\\]\\.originAirport, #awardFlightSearchForm\\.multiCitySearchParam\\[" + (o - 1) + "\\]\\.destinationAirport, #amc" + o + "D").each(function(q, r) {
+                    a.push(jQuery(r).attr("name"))
+                });
+                k.push(errMsg + langRes.error.INVALID_DEP_CITY);
+                k.push(errMsg + langRes.error.INVALID_RET_CITY);
+                k.push(errMsg + langRes.error.INVALID_DEP_DATE);
+                h = false
+            }
+        });
+        if (k.length > 0) {
+            m.apiErrOut(k, a, "awardFlightSearchForm");
+            j.preventDefault();
+            j.stopImmediatePropagation();
+            return false
+        }
+        if (langRes.text.country == "KR") {
+            jQuery("#agreementBookingDialog").dialog("close");
+            if (!jQuery("#agreementBookingDialog").data("continue")) {
+                AAI11L.bookingModule.showAgreement(j.target);
+                return false
+            }
+            //jQuery("#agreementBookingDialog").data("continue", false)
+        }
+
+		var cubanAirports = ['SNU', 'VRA', 'HOG', 'CMW', 'CFG', 'HAV'];
+
+		var inputs = [
+			'#reservationFlightSearchForm\\.originAirport',
+			'#reservationFlightSearchForm\\.destinationAirport',
+			'#origin_display',
+			'#destination_display'
+		];
+
+		var airportFound = false;
+		for (var i = 0; i < inputs.length; ++i) {
+			if( jQuery(inputs[i]).length ) {
+				for(var airportIndex = 0; airportIndex < cubanAirports.length; airportIndex++){
+					if(jQuery(inputs[i]).val().toUpperCase().indexOf(cubanAirports[airportIndex]) > -1) {
+					   airportFound = true;
+					}
+				}
+			}
+		}
+
+		if (airportFound) {
+            jQuery("#cubanAlertDialog").dialog("close");
+            if (!jQuery("#cubanAlertDialog").data("continue")) {
+                AAI11L.bookingModule.showCubanAlert(a.target);
+                return false
+            }
+            //jQuery("#cubanAlert").data("continue", false)
+        }
+        return true
+    } catch (j) {
+        return false
+    }
+};
+AAI11L.bookingModule.cubanAlert = function() {
+	var categories = langRes.text.cubanAlert.categories;
+	var categoriesList = "";
+	jQuery.each(categories, function(i) {
+		categoriesList += "<li>" + categories[i] + "</li>";
+	});
+	var text = "<p>" + langRes.text.cubanAlert.text + "</p><p><ul style='list-style-type: square; padding-left: 30px'>" + categoriesList + "</ul></p><p><a href='https://www.aa.com/i18n/travel-info/international-travel/cuba.jsp' target='_blank'>" + langRes.text.cubanAlert.link + " <span class='icon-newpage' aria-hidden='true'></span><span class='hidden-accessible'>, Opens external site in a new window</span></a></p><p>" + langRes.text.cubanAlert.agree + "</p><div class='btnDialogRow right' style='margin-top: 20px;'><input type='button' value='" + langRes.text.cubanAlert['cancel'] +"' id='cubanAlertDialogCancelBtn' class='btn btn-secondary'><input type='button' value='" + langRes.text.cubanAlert['continue'] + "' id='cubanAlertDialogContinueBtn' class='btn'></div>";
+
+	var a = jQuery("<div id='cubanAlertDialog' style='display: none;'>" + text + "</div>")
+	a.dialog({
+		autoOpen: false,
+		modal: true,
+		draggable: false,
+		resizable: false,
+		title: langRes.text.cubanAlert.title,
+		dialogClass: "aaComDialog cubaDialogContainer",
+		height: "auto",
+		width: "575",
+		open: function(b, c) {
+			jQuery('body').css('overflow', 'hidden');
+			try {
+				jQuery('#cubanAlertDialog :link').blur();
+			} catch(err) { }
+
+			if (m.page == "moresearch") {
+				if (jQuery.browser.msie) {
+					window.scroll(0, 0)
+				}
+			}
+            //jQuery(this).find("span.ui-dialog-title").html(langRes.text.cubanAlert.title);
+		},
+		close: function(b,c) {
+			jQuery('body').css('overflow', '');
+		}
+	});
+	a.dialog("option", "position", "center");
+	//a.dialog("open");
+	//a.dialog("close");
+	jQuery("#cubanAlertDialogCancelBtn").click(function() {
+		a.dialog("close")
+	});
+	jQuery("#cubanAlertDialogContinueBtn").click(function() {
+		a.data("continue", true);
+		a.dialog("close");
+		jQuery(a.data("senderBtn")).click();
+	});
+};
+AAI11L.bookingModule.showAgreement = function(a) {
+    var b = jQuery("#agreementBookingDialog");
+    b.data("senderBtn", a);
+    if (b.data("continue")) {
+        b.dialog("close");
+        return true
+    }
+    b.data("continue", false);
+    //jQuery("#privacyAgreement")[0].checked = false;
+    /*if (m.page == "index") {
+        jQuery("p", b).css("color", "#6f8a95")
+    } else {
+        if (m.page == "moresearch") {
+            jQuery("p", b).css("color", "#000")
+        }
+    }*/
+    b.dialog("open");
+    jQuery("#agreementBookingDialog input[name=privacyAgreement]").focus()
+};
+AAI11L.bookingModule.showCubanAlert = function(a) {
+    var b = jQuery("#cubanAlertDialog");
+    b.data("senderBtn", a);
+    if (b.data("continue")) {
+        b.dialog("close");
+        return true
+    }
+    b.data("continue", false);
+    b.dialog("open");
+	if (typeof _gaq !== 'undefined') {
+		//_gaq.push(['_trackEvent', 'cookie consent', 'consent dialog shown', langRes.text.locale]);
+	}
+};
+AAI11L.bookingModule.moreSearchClearField = function() {
+    jQuery("#awardFlightSearchForm\\.button\\.startOver").bind("click", function(a) {
+        a.preventDefault();
+        var c = jQuery("#awardFlightSearchForm [name=tripType]:checked");
+        jQuery("#awardFlightSearchForm")[0].reset();
+        jQuery('input[id*="_hidden"], input.smartInput').blur().val("");
+        try {
+            jQuery('[name="childPassengerCount"]')[0].selectedIndex = 0;
+            jQuery('[name="childPassengerCount"]').change();
+            jQuery('[name="adultPassengerCount"]')[0].selectedIndex = 0;
+            jQuery('[name="adultPassengerCount"]').change()
+        } catch (b) {}
+        c.click()
+    });
+    jQuery("#multiFlightSearchForm\\.button\\.startOver").bind("click", function(b) {
+        jQuery('input[id*="_hidden"], input.smartInput').blur().val("");
+        try {
+            jQuery('[name="children"]')[0].selectedIndex = 0;
+            jQuery('[name="children"]').change();
+            jQuery('[name="adults"]')[0].selectedIndex = 0;
+            jQuery('[name="adults"]').change()
+        } catch (a) {}
+    })
+};
+AAI11L.bookingModule.mmtConfig = function(b) {
+    var a = jQuery("#managemytripForm");
+    a.attr("action", com.aa.i11l.amadeus.eRetail.config.local.settings.DOMAIN);
+    for (configE in com.aa.i11l.amadeus.eRetail.config.global.retrievePNR) {
+        if (com.aa.i11l.amadeus.eRetail.config.global.retrievePNR[configE] == "") {
+            com.aa.i11l.amadeus.eRetail.config.global.retrievePNR[configE] = com.aa.i11l.amadeus.eRetail.config.local.siteOverrides[configE] || ""
+        }
+        a.append('<input type="hidden" name="' + configE + '" value="' + com.aa.i11l.amadeus.eRetail.config.global.retrievePNR[configE] + '" />')
+    }
+};

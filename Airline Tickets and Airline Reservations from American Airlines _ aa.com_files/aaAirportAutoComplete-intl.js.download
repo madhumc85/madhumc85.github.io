@@ -1,0 +1,60 @@
+function aaAirportAutoComplete(targetFields, onlyAirportsIfNotNull) {
+    jQuery(targetFields).autocomplete({
+        minLength: 3,
+        source: function(request, response) {
+            var localeArr = com.aa.i11l.app.acg.resources.lang.text.locale.split("_");
+
+            jQuery.ajax({
+			    type: "GET",
+                url: "https://i11l-services.aa.com/apps/smartsearch/search.php",
+                contentType: "application/json",
+                dataType: "jsonp",
+                jsonp: 'callback',
+                jsonpCallback: '__callback',
+                data: {
+                    q: encodeURI(request.term),
+                    lg: localeArr[0],
+                    cnt: localeArr[1],
+                    p: ""
+                },
+                success: function(data) {
+                    response(jQuery.map(data.result, function(item) {
+                        return {
+                            label: item.display,
+                            value: item.data
+                        };
+                    }));
+                }
+            });
+        },
+        messages: {
+            noResults: function() {
+                return AAcom.prototype.getProperty("autoComplete.noResult");
+            },
+            results: function(count) {
+                var resultMessage = "";
+                if (count === 1) {
+                    resultMessage = AAcom.prototype.getProperty("autoComplete.oneResult");
+                } else {
+                    resultMessage = AAcom.prototype.getProperty("autoComplete.manyResult");
+                    resultMessage = resultMessage.replace("{0}", count);
+                }
+                return resultMessage;
+            }
+        },
+        select: function() {
+            jQuery(this).blur().focus();
+        },
+        focus: function(event, ui) {
+            jQuery("#ariaLiveReaderContainer").text(ui.item.label);
+        }
+    });
+    jQuery(targetFields).attr("autocomplete", "off");
+    jQuery(targetFields).attr("autocorrect", "off");
+}
+jQuery.fn.aaAirportAutoComplete = function(onlyAirportsIfNotNull) {
+    var i = 0;
+    for (i; i < this.length; i++) {
+        obj = new aaAirportAutoComplete(this[i], onlyAirportsIfNotNull);
+    }
+};

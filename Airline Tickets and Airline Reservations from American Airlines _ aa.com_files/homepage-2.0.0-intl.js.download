@@ -1,0 +1,389 @@
+'use strict';
+
+/* global dynMoreOptionsRoundTrip:true */
+/* global dynMoreOptionsOneWay:true */
+/* global dynAavDeepLinkURL:true */
+/* global dynUserLocale:true */
+/* global onMessage:true */
+/* global captureExtLink:true */
+/* global aaHeroSlides:true */
+/*
+ * Scripts used by the homepage
+ */
+AAcom('browserdetect', 'utilities', 'commonsetup', 'ajax', 'aaDatePicker', 'aaAutoComplete', 'travelDates', function(AAUI) {
+    var $fhServiceClass = $j('#reservationFlightSearchForm label[for="fhServiceClass"]'),
+        $returningFromLabel = $j('#bookingModule label[for="aa-returningFrom"]'),
+        $advBookingSearch = $j('#advBookingSearch'),
+        $aairPassParent = $j('#flightSearchForm\\.tripType\\.aairPass').parent(),
+        $redeemMiles = $j('#flightSearchForm\\.tripType\\.redeemMiles').parent(),
+        $bookingCheckboxContainer = $j('#bookingCheckboxContainer'),
+        $defaultSubmit = $j('#flightSearchForm\\.button\\.reSubmit'),
+        //$vacationSubmit = $j('#flightSearchForm\\.button\\.vacationSubmit'),
+        $departingDateField = $j('#aa-leavingOn'),
+        $returningDateField = $j('#aa-returningFrom'),
+        $flightSearchSubmitButton = $j('#flightSearchFormSubmitButton'),
+        userSelectedDate = false,
+        previousDepartDate = new Date,
+        previousReturnDate = new Date,
+        defaultWasSetOnRoundTripHotel = false,
+        returningDateFieldIsDirty = false,
+        departingDateFieldIsDirty = false,
+        handlebarWorker;
+    var _getSelectedFindFlightType = function _getSelectedFindFlightType() {
+        if ($j('#round-trip-hotel').prop('checked')) {
+            return 'roundTripHotel'
+        }
+        if ($j('#flightSearchForm\\.tripType\\.oneWay').prop('checked')) {
+            return 'oneWay'
+        }
+        return 'roundTrip'
+    };
+    var _showRoundTrip = function _showRoundTrip() {
+        $fhServiceClass.hide();
+        $returningFromLabel.removeClass('is-hidden');
+        $advBookingSearch.show();
+        $bookingCheckboxContainer.show();
+        $defaultSubmit.show();
+        //$vacationSubmit.hide();
+        $flightSearchSubmitButton.removeClass('offset4 offset8');
+        _setMinDates(new Date)
+    };
+    var _showOneWay = function _showOneWay() {
+        $fhServiceClass.hide();
+        $returningFromLabel.addClass('is-hidden');
+        $advBookingSearch.show();
+        $bookingCheckboxContainer.show();
+        $defaultSubmit.show();
+        //$vacationSubmit.hide();
+        //$flightSearchSubmitButton.removeClass('offset8').addClass('offset4');
+        _setMinDates(new Date)
+    };
+    /*var _showRoundTripHotel = function _showRoundTripHotel() {
+        var minDate = new Date;
+        $fhServiceClass.show();
+        $returningFromLabel.removeClass('is-hidden');
+        $advBookingSearch.hide();
+        $bookingCheckboxContainer.hide();
+        $defaultSubmit.hide();
+        $vacationSubmit.show();
+        $j('#reservationFlightSearchForm input[type=checkbox]').prop('checked', false).trigger('change');
+        $flightSearchSubmitButton.removeClass('offset4').addClass('offset8');
+        minDate.setDate(minDate.getDate() + 2);
+        var departDate = _getDateFromDatePicker('aa-leavingOn');
+        var returnDate = _getDateFromDatePicker('aa-returningFrom');
+        if (_getDateDifferenceInDaysFromToday(departDate) <= 1) {
+            previousDepartDate = departDate;
+            previousReturnDate = returnDate;
+            defaultWasSetOnRoundTripHotel = true;
+            _setDateDefaultsForRoundTripHotel()
+        }
+        _setMinDates(minDate)
+    };*/
+    var _setMinDates = function _setMinDates(departDate) {
+        $departingDateField.datepicker('option', 'minDate', departDate);
+        $returningDateField.datepicker('option', 'minDate', departDate);
+        AAUI.initDatepickerA11Y()
+    };
+    var _getDateDifferenceInDaysFromToday = function _getDateDifferenceInDaysFromToday(date) {
+        var TIME_TO_DAY_FACTOR = 1000 * 60 * 60 * 24;
+        var today = new Date;
+        var todayDate = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+        var otherDate = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+        return Math.floor((otherDate - todayDate) / TIME_TO_DAY_FACTOR)
+    };
+    var _getDateFromDatePicker = function _getDateFromDatePicker(datepickerId) {
+        return $j('#' + datepickerId).datepicker('getDate')
+    };
+    var _setDateDefaultsForRoundTripHotel = function _setDateDefaultsForRoundTripHotel() {
+        var roundTripHotelDepartDate = new Date;
+        var roundTripHotelReturnDate = new Date;
+        roundTripHotelDepartDate.setDate(roundTripHotelDepartDate.getDate() + 2);
+        $departingDateField.datepicker('setDate', roundTripHotelDepartDate);
+        var returnDate = _getDateFromDatePicker('aa-returningFrom');
+        var altReturnDate = $returningDateField.attr('data-historicReturnDate') === '' ? '' : new Date($returningDateField.attr('data-historicReturnDate'));
+        if (altReturnDate || returningDateFieldIsDirty) {
+            if (!returningDateFieldIsDirty && returnDate.getMonth() !== altReturnDate.getMonth() && returnDate.getDate() !== altReturnDate.getDate() && returnDate.getYear() !== altReturnDate.getYear()) {
+                roundTripHotelReturnDate.setDate(roundTripHotelReturnDate.getDate() + 9);
+                $returningDateField.datepicker('setDate', roundTripHotelReturnDate)
+            }
+        } else {
+            roundTripHotelReturnDate.setDate(roundTripHotelReturnDate.getDate() + 9);
+            $returningDateField.datepicker('setDate', roundTripHotelReturnDate)
+        }
+    };
+    var _setDateDefaultsForFlightOnly = function _setDateDefaultsForFlightOnly() {
+        var searchDate = new Date;
+        var futureDate = new Date;
+        $departingDateField.datepicker('setDate', searchDate);
+        _setMinDates(searchDate);
+        futureDate.setDate(futureDate.getDate() + 7);
+        $returningDateField.datepicker('setDate', futureDate)
+    };
+    var _updateFindFlightsView = function _updateFindFlightsView(view) {
+        switch (view) {
+            case 'roundTrip':
+                _showRoundTrip();
+                break;
+            case 'oneWay':
+                _showOneWay();
+                break;
+            /*case 'roundTripHotel':
+                _showRoundTripHotel();
+                break;*/
+        }
+        if (view !== 'roundTripHotel') {
+            if (defaultWasSetOnRoundTripHotel) {
+                $departingDateField.datepicker('setDate', previousDepartDate);
+                $returningDateField.datepicker('setDate', previousReturnDate);
+                defaultWasSetOnRoundTripHotel = false
+            }
+        }
+    };
+    var _toggleRedeemMiles = function _toggleRedeemMiles(isRedeemMiles) {
+        if (isRedeemMiles) {
+            $aairPassParent.hide();
+            $j('#flightSearchForm\\.tripType\\.aairPass').prop('checked', false)
+        } else {
+            $aairPassParent.show()
+        }
+    };
+    var _toggleAirpass = function _toggleAirpass(isAirpass) {
+        if (isAirpass) {
+            $j('#flightSearchForm\\.tripType\\.redeemMiles').prop('checked', false);
+            $redeemMiles.hide()
+        } else {
+            $redeemMiles.show()
+        }
+    };
+    var _initBookingForm = function _initBookingForm() {
+        var isRedeemMiles = $j('#flightSearchForm\\.tripType\\.redeemMiles').prop('checked')
+          , isAirpass = $j('#flightSearchForm\\.tripType\\.aairPass').prop('checked');
+        _toggleRedeemMiles(isRedeemMiles);
+        _toggleAirpass(isAirpass);
+        AAUI.onChange('#bookingModule input[type=radio]', function() {
+            $j(this).parent().attr('aria-checked', 'true');
+            $j(this).parent().siblings().attr('aria-checked', 'false');
+            _updateFindFlightsView(this.value)
+        });
+        /*AAUI.onChange('#reservationFlightSearchForm input[type=checkbox]', function(e) {
+            switch (this.id) {
+            case 'flightSearchForm.tripType.redeemMiles':
+                _toggleRedeemMiles(this.checked);
+                break;
+            case 'flightSearchForm.tripType.aairPass':
+                _toggleAirpass(this.checked);
+                break;
+            }
+        });*/
+        /*AAUI.onClick('#flightSearchForm\\.button\\.vacationSubmit', function(e) {
+            e.preventDefault();
+            var localeParam = '?ADID=AACM-DEP-ALL-09-01';
+            if (dynUserLocale == 'en_CA') {
+                localeParam = '?ADID=AACA-DEP-ALL-14-31'
+            } else if (dynUserLocale == 'es_MX') {
+                localeParam = '?ADID=AAMX-DEP-ALL-14-31'
+            }
+            var flightHotelURL = dynAavDeepLinkURL + localeParam + '&searchType=matrix&' + 'adults=' + $j('#flightSearchForm\\.adultOrSeniorPassengerCount').val() + '&';
+            flightHotelURL += 'rooms=1' + '&' + 'serviceclass=' + $j('#fhServiceClass').val() + '&';
+            flightHotelURL += 'from_date=' + $j('#aa-leavingOn').val() + '&' + 'to_date=' + $j('#aa-returningFrom').val() + '&';
+            flightHotelURL += 'from_city_code=' + $j('#reservationFlightSearchForm\\.originAirport').val() + '&' + 'to_city_code=' + $j('#reservationFlightSearchForm\\.destinationAirport').val() + '&' + 'to_time=0&' + 'from_time=0';
+            captureExtLink(dynAavDeepLinkURL + localeParam, document.location);
+            window.open(flightHotelURL, 'aavacations')
+        });*/
+        /*$j('#advBookingSearch').on('click', function(e) {
+            e.preventDefault();
+            $j('#showMoreOptions').val(true);
+            $j('#reservationFlightSearchForm').submit()
+        });*/
+        $j('#flightSearchForm\\.button\\.reSubmit').on('click', function(e) {
+            if (!document.getElementById('flightSearchForm.tripType.redeemMiles').checked) {
+                $j('body').aaBusy({
+                    message: AAUI.getProperty('loadingTxt'),
+                    form: this
+                }).start()
+            }
+            $j('#showMoreOptions').val(false)
+        })
+    };
+    var _initDatePicker = function _initDatePicker() {
+        AAUI.initDatePicker('.aaDatePicker', {
+            beforeShowDay: _highlightSelectDates,
+            onSelect: _handleDateSelect
+        });
+        if ($j.trim($j('#aa-leavingOn').val()).length === 0) {
+            _setDateDefaultsForFlightOnly()
+        }
+    };
+    var _handleDateSelect = function _handleDateSelect(selectedDate, event) {
+        var instance = $j(this).data('datepicker')
+          , date = $j.datepicker.parseDate(instance.settings.dateFormat || $j.datepicker._defaults.dateFormat, selectedDate, instance.settings);
+        userSelectedDate = true;
+        switch (event.id) {
+        case 'aa-leavingOn':
+            if ($j('#aa-returningFrom').datepicker('getDate') < $j('#aa-leavingOn').datepicker('getDate')) {
+                $j('#aa-returningFrom').datepicker('setDate', '')
+            }
+            $j('#aa-returningFrom').datepicker('option', 'minDate', date);
+            AAUI.initDatepickerA11Y();
+            $j('.aaDatePicker').datepicker('refresh');
+            departingDateFieldIsDirty = true;
+            break;
+        case 'aa-returningFrom':
+            returningDateFieldIsDirty = true;
+            $j('.aaDatePicker').datepicker('refresh');
+            break;
+        }
+        if (_getSelectedFindFlightType() === 'roundTripHotel') {
+            defaultWasSetOnRoundTripHotel = false
+        }
+    };
+    var _highlightSelectDates = function _highlightSelectDates(date) {
+        try {
+            var date1 = $j.datepicker.parseDate($j.datepicker._defaults.dateFormat, $j('#aa-leavingOn').val());
+            var date2 = $j.datepicker.parseDate($j.datepicker._defaults.dateFormat, $j('#aa-returningFrom').val());
+            return [true, date1 && (date.getTime() == date1.getTime() || date2 && date >= date1 && date <= date2) ? 'aa-highlight' : '']
+        } catch (error) {
+            return [true, '']
+        }
+    };
+    var _viewReservationList = function _viewReservationList() {
+        if (AAUI.getProperty('account.isSecure') === 'true') {
+            AAUI.ajaxRequest({
+                url: '/home/ajax/mytrips',
+                type: 'GET',
+                dataType: 'json',
+                busyContainer: $j('#aa-viewReservations').parent(),
+                busyMessage: AAUI.getProperty('loadingTxt'),
+                timeout: 50000,
+                onSuccess: function onSuccess(jsonResponse, textStatus) {
+                    if (jsonResponse && textStatus == 'success') {
+                        if (jsonResponse.errorCode) {
+                            $j('#aa-viewReservationsSecure').empty().html('<p><span class="message-error" aria-hidden="true"></span><span>' + jsonResponse.errorMessage + '</span></p>')
+                        } else {
+                            jsonResponse.visibleReservations = jsonResponse.reservations.slice(0, 5);
+                            handlebarWorker.postMessage({
+                                action: 'parseTemplate',
+                                key: 'viewReservations',
+                                data: jsonResponse,
+                                templateContainer: 'aa-viewReservationsSecure'
+                            })
+                        }
+                    } else {
+                        $j('#aa-viewReservationsSecure').empty().html('<p><span class="message-error" aria-hidden="true"></span><span>' + AAUI.getProperty('global.error') + '</span></p>')
+                    }
+                },
+                onError: function onError() {
+                    $j('#aa-viewReservationsSecure').empty().html('<p><span class="message-error" aria-hidden="true"></span><span>' + AAUI.getProperty('global.error') + '</span></p>')
+                },
+                onComplete: function onComplete() {
+                    $j('#aa-viewReservationsSecure *:first').attr('tabindex', '-1').attr('aria-live', 'polite').focus()
+                }
+            })
+        }
+    };
+    var _initAccordion = function _initAccordion() {
+        AAUI.onClick('.acc-tab:not(:first)', function(e) {
+            /*if (e.currentTarget.id === 'jq-myTripsCheckIn' && $j(e.currentTarget.children).hasClass('icon-expand')) {
+                setTimeout(function() {
+                    _viewReservationList()
+                })
+            }*/
+            if (e.currentTarget.id === 'jq-myTripsCheckIn') {
+                $j('#aa-myTrips').toggle()
+            }
+            $j('.acc-tab').not(this).each(function(index, element) {
+                $j(element).find('[class*="icon-collapse"]').toggleClass('icon-expand').toggleClass('icon-collapse');
+                var accPane = $j(element).next();
+                if (accPane.is(':visible')) {
+                    accPane.slideUp()
+                }
+            });
+            $j('html, body').animate({
+                scrollTop: $j('header').offset().top
+            }, 500)
+        })
+    };
+    function setActiveTab() {
+        var activeTab = AAUI.getQueryStringParameterByName('activeTab');
+        if (activeTab && activeTab > 0 && activeTab < 3) {
+            $j('#booking-module-tabs').tabs('option', 'active', activeTab)
+        }
+    }
+    function captureActiveTab(ui) {
+        var $moduleTabs = $j('#booking-module-tabs')
+          , loginFormActiveTab = $j('#loginForm\\.activeTab')[0];
+        // Save the tab the user is currently viewing (find flights/checkin/flight status)
+        // and switch to correct view after login
+        if (loginFormActiveTab && $moduleTabs.length) {
+            loginFormActiveTab.value = $moduleTabs.tabs('option', 'active')
+        }
+    }
+    var _initPage = function _initPage(pageLoad) {
+        pageLoad = pageLoad || false;
+        if (pageLoad) {
+            _updateFindFlightsView(_getSelectedFindFlightType());
+            _initBookingForm();
+            AAUI.initAutoComplete('.aaAutoComplete', false, {
+                position: {
+                    collision: 'flip'
+                }
+            });
+            //AAUI.initAirportLookup('.aaAirportLookup');
+            _initDatePicker();
+            _initBookingForm();
+            if (!$device.mobile && aaHeroSlides.length > 0) {
+                $j('#aa-hp-ad-hero').aaHeroAds(aaHeroSlides)
+            } else {
+                _initAccordion()
+            }
+            AAUI.populateSpecificFlightSearchDateDropdown($j('#travelDate'), true, $j('#clientLocalTime'));
+            setActiveTab()
+        }
+    };
+    /* Moving from document ready because tabs need to be initialized at the earliest to allow user interaction */
+    $j('#booking-module-tabs').tabs({
+        activate: function activate(event, ui) {
+            captureActiveTab();
+            if (ui.newTab.attr('id') == 'aa-tab-viewReservations') {
+                _viewReservationList()
+            }
+        }
+    });
+    /*if (window.Worker) {
+        handlebarWorker = new Worker('/assets/js/webworker/handlebar-worker.min.js');
+        handlebarWorker.onmessage = function(e) {
+            switch (e.data.key) {
+            case 'viewReservations':
+                $j('#' + e.data.templateContainer).empty().html(e.data.html);
+                $j('#aa-viewReservationsSecure *:first').attr('tabindex', '-1').focus();
+                break;
+            default:
+                $j('#' + e.data.templateContainer).empty().html(e.data.html);
+                break;
+            }
+        }
+        ;
+        handlebarWorker.postMessage({
+            action: 'addTemplate',
+            key: 'viewReservations',
+            data: $j('#viewReservations-template').html()
+        })
+    } else {
+        $j.getScript('/assets/js/webworker/handlebar-no-worker.min.js', function(data, textStatus, jqxhr) {
+            handlebarWorker = {
+                postMessage: onMessage
+            };
+            handlebarWorker.postMessage({
+                action: 'addTemplate',
+                key: 'viewReservations',
+                data: $j('#viewReservations-template').html()
+            })
+        })
+    }*/
+    $j(document).ready(function() {
+        _initPage(true);
+        if (AAUI.getProperty('account.isSecure') == 'false') {
+            AAUI.sessionTimeOutDialog.stopTimers()
+        }
+    })
+});

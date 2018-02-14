@@ -1,0 +1,70 @@
+try {
+	com.aa.i11l.app.acg.resources.lang.error = {
+		"ERROR_HEADER": 'The following error(s) occurred.',
+		"INVALID_DEP_CITY": 'Please provide us with a departure city and try again.',
+		"INVALID_RET_CITY": 'Please provide us with a return city and try again.',
+		"INVALID_DEP_DATE": 'Departure date is missing.',
+		"INVALID_RET_DATE": 'Return date is missing.',
+	'fsModuleError': 'We are unable to retrieve flight information from yesterday without a flight number.',
+		'fsModuleError2': 'Please enter a flight number or arrival and departure cities.',
+		'mcEmptySegment': 'Empty flight in itinerary.',
+		'mcSegment': 'Flight ',
+		'checkinFirstName': 'First name is required and cannot contain numbers/special characters.',
+		'checkinLastName': 'Last name is required and cannot contain numbers/special characters.',
+		'checkinPNR': 'Please enter a valid six character booking reference.',		'INVALID_PHIL_CITY':'Regulatory restrictions prevent American Airlines from selling travel departing from the Republic of the Philippines. Please amend your departure city.'
+	};
+
+
+	com.aa.i11l.app.acg.resources.lang.text =  {
+		'language':'en',
+		'country':'IN',
+		'locale': 'en_IN',
+		'datepicker': 'en-GB',
+		'externalTitle': 'Access to aa.com U.S.',
+		'warningTitle': '',
+		'owTitle': '<b>one</b>world Explorer',
+			'today': 'Today',
+		'tomorrow': 'Tomorrow',
+		'yesterday':  'Yesterday',		'daySuffix':  '',
+		'monthSuffix':  '',
+		'owLink': 'http://oneworldrtw.innosked.com/',		'pleaseSelect':  'Please%20Select',
+		'specialOffers': 'specialOffers',
+		'PROMO_TXT_LBL_OW': 'One-Way',
+		'PROMO_TXT_LBL_RT': 'Round-trip',
+		'PROMO_TXT_LBL_ECONOMY': 'Economy',
+		'PROMO_TXT_LBL_PREMIUM': 'Business%20%26%20First',
+		'PROMO_TXT_LBL_BUSINESS': 'Business',
+		'PROMO_TXT_LBL_FIRST': 'First',
+			'PROMO_TXT_LBL_STUDENT': 'Students',
+		'waitpageHeader': 'Did you know?',
+		'waitpageLead': 'World Travel Awards named us North America\'s Leading Airline',
+		'waitpageText': 'One Moment Please...',
+        'waitpageLoading': 'Loading...',
+		'cubanAlert': {
+			'title': 'Visit Cuba',
+			'text': 'U.S. citizens no longer have to apply for a license to visit Cuba, but tourism is still banned by the embargo. Your visit must comply with one of the 12 categories of authorized travel:',
+			'categories': [
+				'Family visits',
+				'Official governmental business',
+				'Journalistic activity',
+				'Professional research or meetings',
+				'Educational activities or people-to-people exchanges',
+				'Religious activities',
+				'Sports and public events',
+				'Support for the Cuban people',
+				'Humanitarian projects',
+				'Research',
+				'Informational materials',
+				'Authorized export activity'
+			],
+			'link': 'More about travel to Cuba',
+			'agree': 'By selecting continue, you agree that you comply with one of the 12 categories.',
+			'cancel': 'Start over',
+			'continue': 'Continue'
+		}
+	};
+
+		com.aa.i11l.app.acg.resources.ui.html.interstitialImg = '/intl/ie/apps/ACG/css/interstitial/waitpage_ap_en_IN.gif';
+	}
+catch(e) {
+	}

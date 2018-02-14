@@ -1,0 +1,3546 @@
+/*  ======================================================================
+/*  ======================================================================
+ *    Copyright 2010 American Airlines, Inc. All rights reserved.
+ *
+ *	  utils.core - CORE UTILITY LIB
+ *
+ *    depends on jquery-core-bundle
+ *
+ *  ======================================================================
+ */
+
+
+/*  ======================================================================
+ *    Begins general utility and helper classes
+ *  ======================================================================
+ */
+
+
+/*  ======================================================================
+ *    JSOPath class
+ *	  Namespace: com.aa.i11l.utils.JSOPath
+ *  ======================================================================
+ */
+
+Namespace.Manager.Register("com.aa.i11l.utils.JSOPath"); // Declares namespace
+
+/**
+ *	The JavaScript Object Path (JSOP) class provides a simple interface,
+ *  which allows you to query nested objects using standard path notation
+ *	@author: Oliver Ammann
+ */
+com.aa.i11l.utils.JSOPath = function(objRefAsStr) {
+	this.objRef = objRefAsStr;
+};
+
+com.aa.i11l.utils.JSOPath.prototype.getObjectValue = function(obj) {
+	try {
+		var value = eval(obj);
+		if(typeof value === 'undefined') {
+			return null;
+		}
+		else {
+			return value;
+		}
+	}
+	catch(err) {
+		return null;
+	}
+};
+
+/**
+ *	The execute method allows you to query the base object using a simple
+ *  path notation. For example if you had the following object and wanted
+ *  the value of property2 you would pass the query 'properties/property2'
+ *  as an argument to the execute function
+ *
+ *  resources = {
+ *      properties: {
+ *          property1: 'value1',
+ *          property2: 'value2'
+ *      }
+ *  }
+ *
+ *  @param query - Passes the path argument
+ *  @return - Property value or null
+ */
+com.aa.i11l.utils.JSOPath.prototype.execute = function(query) {
+	var queryTokens = query.split('/');
+	var dataStruct = '';
+	for(i = 0; i < queryTokens.length; i++) {
+		dataStruct += '["' + queryTokens[i] + '"]';
+	}
+	var jpath = this.objRef + dataStruct;
+	return this.getObjectValue(jpath);
+};
+
+/*  ======================================================================
+ *    JSONP handling class
+ *	  Namespace: com.aa.i11l.utils.jsonp
+ *  ======================================================================
+ */
+
+Namespace.Manager.Register("com.aa.i11l.utils.jsonp"); // Declares namespace
+
+// Adapted from Jason Levitt simple class for accessing Yahoo! Web Services
+// using dynamically generated script tags and JSON
+
+// Constructor -- pass a REST request URL to the constructor
+com.aa.i11l.utils.jsonp.JSONscriptRequest = function(fullUrl) {
+    // REST request path
+    this.fullUrl = fullUrl;
+    // Keep IE from caching requests
+    this.noCacheIE = '&noCacheIE=' + (new Date()).getTime();
+    // Get the DOM location to put the script tag
+    this.headLoc = document.getElementsByTagName("head").item(0);
+    // Generate a unique script tag id
+    this.scriptId = 'SSJscriptId' +
+	                com.aa.i11l.utils.jsonp.JSONscriptRequest.scriptCounter++;
+};
+
+// Static script ID counter
+com.aa.i11l.utils.jsonp.JSONscriptRequest.scriptCounter = 1;
+
+// array to store inserted script ids'
+com.aa.i11l.utils.jsonp.JSONscriptRequest.idArray = [];
+
+// buildScriptTag method
+com.aa.i11l.utils.jsonp.JSONscriptRequest.prototype.buildScriptTag = function () {
+
+    // Create the script tag
+    this.scriptObj = document.createElement("script");
+
+    // Add script object attributes
+    this.scriptObj.setAttribute("type", "text/javascript");
+    this.scriptObj.setAttribute("src", this.fullUrl + this.noCacheIE);
+    this.scriptObj.setAttribute("id", this.scriptId);
+	this.scriptObj.setAttribute("charset", "utf8");
+
+};
+
+// array to store inserted script ids'
+com.aa.i11l.utils.jsonp.JSONscriptRequest.idArray = [];
+
+// removeScriptTag method
+
+com.aa.i11l.utils.jsonp.JSONscriptRequest.prototype.removeScriptTag = function () {
+
+	/** Only remove the first script tag created, so that subsequent request can still return and run correctly **/
+	if (com.aa.i11l.utils.jsonp.JSONscriptRequest.idArray.length > 0){
+		var rId =  com.aa.i11l.utils.jsonp.JSONscriptRequest.idArray.shift();
+		this.headLoc.removeChild(document.getElementById(rId));
+	}
+};
+
+// addScriptTag method
+//
+com.aa.i11l.utils.jsonp.JSONscriptRequest.prototype.addScriptTag = function () {
+    // Create the script tag
+    this.headLoc.appendChild(this.scriptObj);
+	com.aa.i11l.utils.jsonp.JSONscriptRequest.idArray.push(this.scriptObj.id);
+};
+
+
+/*  ======================================================================
+ *    Event handling classes
+ *	  Namespace: com.aa.i11l.utils.event
+ *  ======================================================================
+ */
+
+Namespace.Manager.Register("com.aa.i11l.utils.event"); // Declares namespace
+
+/**
+ *	This is the is the listener class which will handle event listening
+ *	@author: Oliver Ammann
+ */
+com.aa.i11l.utils.event.listener = function() { };
+
+/**
+ *	The addOnLoad method of listener allows you to add multiple events for window.onload
+ *	It is cross browser compatible and uses function chaining for older browsers
+ *  that dont support addEventListener or attachEvent
+ *  @param fn - Passes the function to execute when event is fired
+ */
+com.aa.i11l.utils.event.listener.prototype.addOnLoad = function(fn) {
+	if (typeof window.addEventListener !== 'undefined')  {
+		window.addEventListener('load', fn, false);
+	}
+	else if (typeof document.addEventListener !== 'undefined')  {
+		document.addEventListener('load', fn, false);
+	}
+	else if (typeof window.attachEvent !== 'undefined')  {
+		window.attachEvent('onload', fn);
+	}
+	else {
+		var oldfn = window.onload;
+		if (typeof window.onload !== 'function') {
+			window.onload = fn;
+		}
+		else {
+			window.onload = function() {
+				oldfn();
+				fn();
+			};
+		}
+	}
+};
+
+/**
+ *	The add method of listener allows you to add event listeners, which listen for
+ *  the specified event to be fired on the specified dom element
+ *  and execute the specified function
+ *	@param id - Passes the dom id value
+ *  @param event - Passes the event on which to trigger
+ *  @param fn - Passes the function to execute when event is fired
+ */
+com.aa.i11l.utils.event.listener.prototype.add = function(id, event, fn) {
+    var element = document.getElementById(id);
+	if (element !==  null) {
+		if(typeof window.addEventListener !== 'undefined') {
+			element.addEventListener(event, fn, false); // W3C compliant browsers
+		}
+		if(typeof document.addEventListener !== 'undefined') {
+			element.addEventListener(event, fn, false); // Opera browsers
+		}
+		else if(typeof window.attachEvent !== 'undefined') {
+			element.attachEvent('on'+event, fn); // IE
+		}
+	}
+};
+
+/**
+ *	This is the is the handler class which will handle how events should
+ *  be processed.
+ *	@author: Oliver Ammann
+ */
+com.aa.i11l.utils.event.handler = function() { };
+
+/**
+ *	The preventDefaultAction method of handler prevents the default event from occuring
+ *  E.G. the default browser submit action or link click
+ *  The method encapsulates browser differences in terms of how the default is prevented
+ *
+ *	@param e - Takes the default event
+ */
+com.aa.i11l.utils.event.handler.prototype.preventDefaultAction = function(e) {
+	if (e && e.preventDefault) {
+		e.preventDefault();
+	}
+	else if (window.event && window.event.returnValue) {
+		window.eventReturnValue = false;
+	}
+};
+
+
+/*  ======================================================================
+ *    DOM utility classes
+ *	  Namespace: com.aa.i11l.utils.dom
+ *  ======================================================================
+ */
+
+Namespace.Manager.Register("com.aa.i11l.utils.dom"); // Declares namespace
+
+com.aa.i11l.utils.dom.actions = function() { };
+
+com.aa.i11l.utils.dom.actions.prototype.createDomRef = function(e) {
+	var el;
+	try {
+		el = document.getElementById(e);
+	}
+	catch(err) {
+		el = null;
+		throw new Error('A fatal API exception occurred at com.aa.i11l.utils'+
+			            '.dom.actions.prototype.createDomRef'+
+						' (DOM node not found at runtime)');
+	}
+	return el;
+};
+
+com.aa.i11l.utils.dom.actions.prototype.createNode = function(element, attributes) {
+	var newNode = null;
+	try {
+		newNode = document.createElement(element);
+		for(prop in attributes) {
+			newNode.setAttribute(prop, attributes[prop]);
+		}
+	}
+	catch(err) { }
+	return newNode;
+};
+
+com.aa.i11l.utils.dom.actions.prototype.insertAfter = function(refNode, newNode) {
+	refNode.parentNode.insertBefore(newNode, refNode.nextSibling);
+};
+
+com.aa.i11l.utils.dom.actions.prototype.removeDomElement = function(e) {
+	el = this.createDomRef(e);
+	if(el !== null) {
+		el.parentNode.removeChild(el);
+	}
+};
+
+com.aa.i11l.utils.dom.actions.prototype.removeNodes = function(nodeList) {
+	for(i = 0; i < nodeList.length; i++) {
+		var parent = nodeList[i].parentNode;
+		if(parent !== null) {
+			parent.removeChild(nodeList[i]);
+		}
+	}
+};
+
+com.aa.i11l.utils.dom.actions.prototype.setFieldValue = function(value, emptyFlag, target) {
+	var el = this.createDomRef(target);
+	if(el) {
+		if(value === emptyFlag) {
+			el.value = '';
+		}
+		else {
+			el.value = value;
+		}
+	}
+};
+
+/*  ======================================================================
+ *    Begins date utility classes
+ *	  Namespace: com.aa.i11l.utils.date
+ *  ======================================================================
+ */
+
+Namespace.Manager.Register("com.aa.i11l.utils.date"); // Declares namespace
+
+com.aa.i11l.utils.date = function() { };
+
+com.aa.i11l.utils.date.prototype.getYear = function(getDay, getMonth) {
+    var day = parseInt(getDay, 10);
+	var month = parseInt(getMonth, 10);
+	var year;
+    var date = new Date();
+    if(month <= date.getUTCMonth()+1) {
+        if(month === date.getUTCMonth()+1 && day < date.getUTCDate()) {
+            year = date.getUTCFullYear() + 1;
+        }
+        else if(month < date.getUTCMonth()+1) {
+            year = date.getUTCFullYear() + 1;
+        } else {
+            year = date.getUTCFullYear();
+        }
+    } else {
+        year = date.getUTCFullYear();
+    }
+    return year;
+};
+
+
+
+com.aa.i11l.utils.date.prototype.isItTodayInDallas = function()
+{
+	var centralTime = -6, //US Central Time, 5 during daylight saving time
+		a = new Date(),
+		l = a.getDate(), //local day of month
+		n = new Date(a.getUTCFullYear(),a.getUTCMonth(),a.getUTCDate(),a.getUTCHours(),a.getUTCMinutes(),a.getUTCSeconds()).getTime(), //UTC time regardless of timezone offset
+		d = new Date(n + (centralTime*60*60*1000)); //Dallas time (UTC+offset)
+		/* Is it DST in Dallas?
+		United States begins Daylight Saving Time at 2:00 a.m. on the second Sunday in March and reverts to standard time on the first Sunday in November.
+		*/
+			var dstStart, dstEnd;
+			for (var i=0;i<7;i++)
+			{
+				dstStart =  new Date(d.getFullYear(),2,1+i); //March 1st;
+				if (dstStart.getDay() == 0){ //Sunday
+					dstStart =  new Date(d.getFullYear(),2,1+i+7,1,59,59); //2nd Sunday 1:59:59
+					break;
+				}
+			}
+
+			for (var i=0;i<7;i++)
+			{
+				dstEnd =  new Date(d.getFullYear(),10,1+i,1,59,59); //November 1st 1:59:59
+				if (dstEnd.getDay() == 0){ //1st Sunday
+					break;
+				}
+			}
+
+			if ((d.getTime() > dstStart.getTime()) && (d.getTime() < dstEnd.getTime()))
+			{
+				centralTime = -5;
+				d = new Date(n + (centralTime*60*60*1000)); //Dallas time with Daylight Saving Time
+			}
+
+		l2 = d.getDate(); //Dallas day of month
+
+		return (l2-l); //return difference
+};
+
+
+
+/*  ======================================================================
+ *    Begins i18n classes
+ *	  Namespace: com.aa.i11l.utils.i18n
+ *  ======================================================================
+ */
+
+Namespace.Manager.Register("com.aa.i11l.utils.i18n"); // Declares namespace
+
+/**
+ *	This is the parent i18n locale class from whom all local classes should inherit.
+ *  The locale class defines the core functionality needed by all locale classes.
+ *	@author: Oliver Ammann
+ */
+com.aa.i11l.utils.i18n.locale = function() {
+	this.locale;
+	this.country;
+	this.language;
+};
+
+/**
+ *	The processLocale method splits the locale and stores the combined locale,
+ *  country and language in their respective class variables.
+ *	@param locale - Passes the locale string value
+ */
+com.aa.i11l.utils.i18n.locale.prototype.processLocale = function(locale) {
+	this.locale = locale;
+	if (this.verifyLocale(this.locale)) {
+		var localeArray = this.locale.split('_');
+		this.language = localeArray[0];
+		this.country = localeArray[1];
+	}
+	else {
+		throw new Error('A fatal API exception occurred at com.aa.i11l.utils.i18n' +
+			'.locale.prototype.processLocale' +
+			' (Specified locale is not supported)');
+	}
+};
+
+/**
+ *	The processLocale method splits the locale and stores the combined locale,
+ *  country and language in their respective class variables.
+ *	@param locale - Passes the locale string value
+ */
+com.aa.i11l.utils.i18n.locale.prototype.verifyLocale = function(locale) {
+    var supportedLocale = true;
+	try {
+		if (typeof com.aa.i11l.app.resources['locales'][locale] === 'undefined') {
+			supportedLocale = false;
+		}
+	}
+	catch(err) {
+		supportedLocale = false;
+		throw new Error('A fatal API exception occurred at com.aa.i11l.utils.i18n' +
+			'.locale.prototype.verifyLocale' +
+			' (Object read or write error occurred at runtime)');
+	}
+	return supportedLocale;
+};
+
+/**
+ *	The localeUtils class inherits from locale and extends functionality to allow
+ *  config object processing. It is config specific in terms of the type of config
+ *  object structure but is application neutral.
+ *	@author: Oliver Ammann
+ */
+com.aa.i11l.utils.i18n.localeUtils = function() {
+	this.globalConfig;
+	this.localConfig;
+};
+
+// Inherits from/extends com.aa.i11l.util.i18n.locale
+com.aa.i11l.utils.i18n.localeUtils.prototype = new com.aa.i11l.utils.i18n.locale;
+
+/**
+ *	The setGlobalConfig method sets the global configuration class variable.
+ *	@param globalConfig - Passes the object reference to the global config
+ */
+com.aa.i11l.utils.i18n.localeUtils.prototype.setGlobalConfig = function(globalConfig) {
+	this.globalConfig = globalConfig;
+};
+
+/**
+ *	The setLocalConfig method sets the local configuration class variable.
+ *	@param localConfig - Passes the object reference to the local config
+ */
+com.aa.i11l.utils.i18n.localeUtils.prototype.setLocalConfig = function(localConfig) {
+	this.localConfig = localConfig;
+};
+
+/**
+ *	The getLocaleString method resolves the mapping between a generic resource
+ *  call and its locale specific string value. This is specific to language
+ *  resources only such as error and notification messages
+ *	@param str - Passes the generic rescource call as a dot notation string value
+ *	@return - Property value or null
+ */
+
+com.aa.i11l.utils.i18n.localeUtils.prototype.getLocaleString = function(str) {
+	var localeStr = null;
+	var strArr = str.split('.');
+	if(this.language === 'en') {
+		try {
+		    localeStr = this.globalConfig[strArr[0]][strArr[1]];
+		}
+		catch(err) { }
+	}
+	else {
+		try {
+		    localeStr = this.localConfig[this.language][strArr[0]][strArr[1]];
+		}
+		catch(err) { }
+	}
+
+	if(typeof localeStr === 'undefined') {
+		localeStr = null;
+	}
+    return localeStr;
+};
+
+/**
+ *	The getLocaleString method resolves the mapping between a generic resource
+ *  call and its locale specific string value. This is specific to language
+ *  resources only such as error and notification messages
+ *	@param str - Passes the generic rescource call as a dot notation string value
+ *	@return - Property value or null
+
+com.aa.i11l.utils.i18n.localeUtils.prototype.getLocaleString = function(str, res) {
+	var localeStr = null;
+	var strArr = str.split('.');
+	if(this.language === 'en') {
+		try {
+		    localeStr = res[strArr[0]][strArr[1]];
+		}
+		catch(err) { }
+	}
+	else {
+		try {
+		    localeStr = res[this.language][strArr[0]][strArr[1]];
+		}
+		catch(err) { }
+	}
+
+	if(typeof localeStr === 'undefined') {
+		localeStr = null;
+	}
+    return localeStr;
+};
+*/
+/**
+ *	The getLocaleConfig method resolves the mapping between a generic resource
+ *  call and its locale specific value. This is specific to configuration settings
+ *  such as locale specific business rules.
+ *
+ *  The role up structure works as follows: Look in the custom config first, if object
+ *  is not found look in the local config, if object is not found go to the default
+ *  config, which is the global config. When the object is found it is assigned to
+ *  the localConfig variable and returned. If no object is found after searching all
+ *  config objects the localeConfig variable is set to null and returned.
+ *
+ *	@param str - Passes the generic rescource call as a dot notation string value
+ *  @param customConf - Passes the custom config identifier used in the custom lookup
+ *	@return - Property value or null
+ */
+com.aa.i11l.utils.i18n.localeUtils.prototype.getLocaleConfig = function(str, customConf) {
+	var localeConfig = null;
+	var strArr = str.split('.');
+    // Look up custom config first
+	localeConfig = this.doLookup(strArr, customConf, true, this.localConfig);
+    // If not found in cust config look up local config
+	if(localeConfig === null) {
+		localeConfig = this.doLookup(strArr, customConf, false, this.localConfig);
+	}
+	// If not found in local config look up global config
+	if(localeConfig === null) {
+		localeConfig = this.doLookup(strArr, customConf, false, this.globalConfig);
+	}
+
+	return localeConfig;
+};
+
+/**
+ *	The doLookup method handles the config lookup query and tests for object runtime
+ *  errors and undefined property errors.
+ *
+ *	@param strArr - Passes the generic rescource call as an array of 2 values
+ *  @param customConf - Passes the custom config identifier used for the custom lookup
+ *  @param custLookup - Boolean, true for custom lookup false for standard lookup
+ *	@return - Property value or null
+ */
+com.aa.i11l.utils.i18n.localeUtils.prototype.doLookup = function(strArr, customConf,
+	                                                             custLookup, config) {
+	var localeVal = null;
+	try {
+		if(custLookup) {
+		    // Custom config lookup
+		    localeVal = config[customConf][strArr[0]][strArr[1]];
+		}
+		else {
+			// Standard config lookup
+			localeVal = config[strArr[0]][strArr[1]];
+		}
+		// If config lookup returns undefined set localeVal to null
+		if(typeof localeVal === 'undefined') {
+			localeVal = null;
+		}
+	}
+	catch(err) { } // If runtime error occurs leave localeVal at default null value
+
+	return localeVal;
+};
+
+com.aa.i11l.utils.i18n.imeHandler = function() {
+	this.keyUpCall;
+	this.textInput;
+	this.pollMode;
+	this.pollInterval = 340;
+	this.okuValue = '';
+	this.code;
+	this.eventType;
+};
+
+com.aa.i11l.utils.i18n.imeHandler.prototype.setPollingMode = function(pm) {
+	this.pollMode = pm;
+};
+
+com.aa.i11l.utils.i18n.imeHandler.prototype.setPollInterval = function(pi) {
+	this.pollInterval = pi;
+};
+
+com.aa.i11l.utils.i18n.imeHandler.prototype.doKeyDownAction = function() {
+    if(this.textInput.value !== this.okuValue) {
+		this.okuValue = this.textInput.value;
+	    this.keyUpCall();
+	}
+	if(this.pollMode) {
+	    var self = this;
+	    setTimeout(self.doKeyDownAction.bind(self), this.pollInterval);
+	}
+};
+
+com.aa.i11l.utils.i18n.imeHandler.prototype.kill = function() {
+		this.setPollingMode(false);
+};
+
+com.aa.i11l.utils.i18n.imeHandler.prototype.init = function() {
+	this.setPollingMode(true);
+	this.doKeyDownAction();
+
+};
+
+com.aa.i11l.utils.i18n.imeHandler.prototype.doKeyup = function(id, fn) {
+	this.keyUpCall = fn;
+    var self = this;
+	var eHandler = new com.aa.i11l.utils.event.listener();
+	var domHandler = new com.aa.i11l.utils.dom.actions();
+
+	try {
+		this.textInput = domHandler.createDomRef(id);
+	}
+	catch(err) { }
+
+   	eHandler.add(id, 'keydown', self.init.bind(self));
+	eHandler.add(id, 'keyup', self.kill.bind(self));
+	eHandler.add(id, 'blur', self.kill.bind(self));
+};
+
+com.aa.i11l.utils.i18n.imeHandler.prototype.updateEventInfo = function(e) {
+    if (!e) {
+        var e = window.event;
+    }
+    if (e.keyCode) {
+        this.code = e.keyCode;
+    }
+    else if (e.which) {
+        this.code = e.which;
+    }
+    this.eventType = e.type;
+};
+
+
+AAI11L.registerImeHandler = function(element, func) {
+	var handler = new com.aa.i11l.utils.i18n.imeHandler();
+	handler.doKeyup(element, func);
+};
+
+
+/*  ======================================================================
+ *    Begins form utility classes
+ *    Namespace: com.aa.i11l.utils.forms
+ *  ======================================================================
+ */
+
+Namespace.Manager.Register("com.aa.i11l.utils.forms");     // form classes
+
+ /**
+ *	Helper class used by contoller classes that need to process forms
+ *  Namespace: com.aa.i11l.util.forms
+ *	@author: Oliver Ammann
+ */
+com.aa.i11l.utils.forms.actionForm = function() {
+	this.form;    // Holds dom reference of target form
+    this.jsonStr; // Place holder for parsed form data (JSON format)
+};
+
+/**
+ *	The setForm method sets the form class variable. (Setter method)
+ *	@param form - Passes the dom form reference to the specified form.
+ */
+com.aa.i11l.utils.forms.actionForm.prototype.setForm = function(form) {
+	this.form = form;
+};
+
+/**
+ *	The getJsonStr method returns the jsonStr class variable value.
+ *	@return - Class variable value (Getter method)
+ */
+com.aa.i11l.utils.forms.actionForm.prototype.getJsonStr = function() {
+	return this.jsonStr;
+};
+
+/**
+ *	Generic method to read in HTML form parameter values for a variable length form.
+ *  The form name value pairs are formatted as a JSON string and assigned to the
+ *  jsonStr class variable.
+ *
+ *  The form class variable must contain a valid dom reference to a form object before
+ *  this method can be called.
+ */
+com.aa.i11l.utils.forms.actionForm.prototype.doFormRead = function() {
+	this.jsonStr = '{ "formName": "'+this.form.name+'",';
+	//console.log(this.form.length);
+	for(var i = 0; i < this.form.length; i++) {
+		var elementRead = false;
+		var elType = this.form.elements[i].type;
+		if(elType === "checkbox" || elType === "radio") {
+			// Only read checkbox/radio value if element is checked
+			if(this.form.elements[i].checked) {
+				this.jsonStr += '"'+this.form.elements[i].name+'":';
+				this.jsonStr += '"'+this.form.elements[i].value+'"';
+				elementRead = true;
+			}
+			else if(elType === "checkbox") {
+				this.jsonStr += '"'+this.form.elements[i].name+'":';
+				this.jsonStr += '"'+null+'"'; // Send null value for unchecked checkboxes
+				elementRead = true;
+			}
+		}
+		else if(elType === "select-one") {
+			var optionindex = this.form.elements[i].selectedIndex;
+            var formvalue = this.form.elements[i].options[optionindex].value;
+            this.jsonStr += '"'+this.form.elements[i].name+'":';
+			this.jsonStr += '"'+formvalue+'"';
+			elementRead = true;
+		}
+	    else if(elType === "text" || elType === "hidden") {
+			this.jsonStr += '"'+this.form.elements[i].name+'":';
+            this.jsonStr += '"'+this.form.elements[i].value+'"';
+			elementRead = true;
+        }
+        // Check if the current iteration brings us to the end of the form
+		// If not insert a comma for correct JSON formatting.
+        if(elementRead) {
+			this.jsonStr += ',';
+        }
+    }
+	if(this.jsonStr.charAt(this.jsonStr.length-1) === ',') {
+		this.jsonStr = this.jsonStr.slice(0, -1);
+	}
+    this.jsonStr += '}';
+};
+
+/*  ======================================================================
+ *    Begins toolkit utility classes
+ *    Namespace: com.aa.i11l.utils.toolkit
+ *  ======================================================================
+ */
+
+Namespace.Manager.Register("com.aa.i11l.utils.toolkit");  // toolkit classes
+
+/**
+ *	The objectUtils class provides methods for manipulating and transforming objects and
+ *  arrays.
+ *	@author: Oliver Ammann
+ */
+com.aa.i11l.utils.toolkit.objectUtils = function() { };
+
+/**
+ *	The hashTableToArray method allows you to convert a hashtable such as an associative
+ *  array to a conventional array with indexing
+ *
+ *	@param ht - Passes the ht reference
+ *	@return - Conventional array created from the passed in hash table object
+ */
+com.aa.i11l.utils.toolkit.objectUtils.prototype.hashTableToArray = function(ht) {
+	var index = 0;
+	var arr = new Array();
+	try {
+        for(prop in ht) {
+            arr[index] = ht[prop];
+            index++;
+        }
+	}
+	catch(err) {
+		throw new Error('A fatal API exception occurred at com.aa.i11l.utils'+
+			            '.toolkit.objectUtils.prototype.hashTableToArray'+
+						' (Object read or write error occurred at runtime)');
+	}
+	return arr;
+};
+
+/**
+ *	The copyAllFields method allows you to copy the values of properties in one object
+ *  to another object.
+ *
+ *	@param input - Takes the object reference from where field values should be copied
+ *	@param output - Takes the object reference to where the field values should be copied
+ */
+com.aa.i11l.utils.toolkit.objectUtils.prototype.copyAllFields = function(input, output) {
+	try {
+		for(prop in input) {
+			output[prop] = input[prop];
+		}
+	}
+	catch(err) {
+		throw new Error('A fatal API exception occurred at com.aa.i11l.utils'+
+			            '.toolkit.objectUtils.prototype.copyAllFields'+
+						' (Object read or write error occurred at runtime)');
+	}
+};
+
+/**
+ *	The copyCommonFields method allows you to copy the values of properties in one object
+ *  to the same named properties in another object.
+ *
+ *	@param input - Takes the object reference from where field values should be copied
+ *	@param output - Takes the object reference to where the field values should be copied
+ */
+com.aa.i11l.utils.toolkit.objectUtils.prototype.copyCommonFields = function(input,
+	                                                                        output) {
+	try {
+        for(prop in input) {
+	        if(typeof output[prop] !== 'undefined') {
+			    output[prop] = input[prop];
+		    }
+	    }
+	}
+	catch(err) {
+		throw new Error('A fatal API exception occurred at com.aa.i11l.utils'+
+			            '.toolkit.objectUtils.prototype.copyCommonFields'+
+						' (Object read or write error occurred at runtime)');
+	}
+};
+
+/**
+ *	The copyField method allows you to copy the value of a specified property in one
+ *  object to a specified property in another object or to another property in the same
+ *  object.
+ *
+ *	@param input - Takes the object reference from where field values should be copied
+ *	@param output - Takes the object reference to where the field values should be copied
+ *	@param copySrc - Takes a string that specifies the property value to be copied
+ *	@param copyDest - Takes a string that specifies the target property
+ */
+com.aa.i11l.utils.toolkit.objectUtils.prototype.copyField = function (input, output,
+	                                                                  copySrc, copyDest) {
+	try {
+        output[copyDest] = input[copySrc];
+	}
+	catch(err) {
+		throw new Error('A fatal API exception occurred at com.aa.i11l.utils'+
+			            '.toolkit.objectUtils.prototype.copyField'+
+						' (Object read or write error occurred at runtime)');
+	}
+};
+
+com.aa.i11l.utils.toolkit.objectUtils.prototype.addField = function (obj, key, value) {
+	try {
+        obj[key] = value;
+	}
+	catch(err) {
+		throw new Error('A fatal API exception occurred at com.aa.i11l.utils'+
+			            '.toolkit.objectUtils.prototype.addField'+
+						' (Object read or write error occurred at runtime)');
+	}
+};
+
+com.aa.i11l.utils.toolkit.objectUtils.prototype.addFields = function(add, target) {
+	for(prop in add) {
+		this.addField(target, prop, add[prop]);
+	}
+};
+
+com.aa.i11l.utils.toolkit.objectUtils.prototype.deleteField = function (obj, key) {
+	try {
+        delete obj[key];
+	}
+	catch(err) {
+		throw new Error('A fatal API exception occurred at com.aa.i11l.utils'+
+			            '.toolkit.objectUtils.prototype.deleteField'+
+						' (Object read or write error occurred at runtime)');
+	}
+};
+
+/**
+ *	The returnFieldValue method returns the value of a specified property from the
+ *  specified object
+ *
+ *	@param obj - Takes the object reference from where field values should be returned
+ *	@param field - Takes a string that specifies the property from which to get the value
+ *	@return copySrc - Returns object property value
+ */
+com.aa.i11l.utils.toolkit.objectUtils.prototype.returnFieldValue = function(obj, field) {
+	try {
+        return obj[field];
+	}
+	catch(err) {
+		throw new Error('A fatal API exception occurred at com.aa.i11l.utils'+
+			            '.toolkit.objectUtils.prototype.returnFieldValue'+
+						' (Object read error occurred at runtime)');
+	}
+};
+
+/**
+ *	The updatePropRange method allows you to insert a specified value into multiple
+ *  property fields where the property name is the same except for an increment number
+ *  at the end of the property name. E.G. param1, param2. This method would allow you to
+ *  assign a single value to as many properties as you wish within a given range. For
+ *  example if you wanted to update param5 - 10 you could do so as follows:
+ *  updatePropRange(myObj, 5, 10, 'param', 'myValue')
+ *
+ *	@param obj - Takes the object reference where you want to update the field values
+ *	@param begin - Specifies the begin range as an integer
+ *	@param end - Specifies the end range as an integer
+ *	@param key - Takes a string without increment value that specifies the target property
+ *	@param insertValue - Takes a string that specifies the target value
+ */
+com.aa.i11l.utils.toolkit.objectUtils.prototype.updatePropRange = function(
+	obj, begin, end, key, insertValue) {
+	var keyStr = '';
+	for(i = begin; i < end; i++) {
+		keyStr = (key+i);
+		try {
+		    if(typeof obj[keyStr] !== 'undefined') {
+			    obj[keyStr] = insertValue;
+		    }
+		    else {
+			    throw new Error('A fatal API exception occured at com.aa.i11l.utils.'+
+				                'toolkit.objectUtils.prototype.updatePropRange '+
+			                    '(Specified property does not exist in target object)');
+		    }
+		}
+		catch(err) {
+			throw new Error('A fatal API exception occured at com.aa.i11l.utils.toolkit.'+
+				            'objectUtils.prototype.updatePropRange. (One or more '+
+			                'required objects were not found at runtime)');
+		}
+	}
+};
+
+com.aa.i11l.utils.toolkit.objectUtils.prototype.transform = function(obj, search, replace) {
+	for(prop in obj) {
+		var re = search + '.';
+	    if(new RegExp(re).test(prop)) {
+			this.deleteField(obj, prop);
+			this.addFields(replace, obj);
+		}
+	}
+};
+
+com.aa.i11l.utils.toolkit.objectUtils.prototype.createObject = function(objLiteralStr) {
+	return eval('(' + objLiteralStr + ')');
+};
+
+/**
+ *	The filter class provides methods for filtering values against a lookup table
+ *	@author: Oliver Ammann
+ */
+com.aa.i11l.utils.toolkit.filter = function(filterObjRef, query, lookup) {
+	this.filterObjRef = filterObjRef;
+	this.query = query;
+	this.lookup = lookup;
+};
+
+/**
+ *	The setFilterObjRef method sets the filterObjRef class variable. (Setter method)
+ *	@param filterObjRef - Passes reference to the filter object.
+ */
+com.aa.i11l.utils.toolkit.filter.prototype.setFilterObjRef = function(filterObjRef) {
+	this.filterObjRef = filterObjRef;
+};
+
+/**
+ *	The setQuery method sets the query class variable. (Setter method)
+ *	@param query - Accepts a string that will be used as the query key.
+ */
+com.aa.i11l.utils.toolkit.filter.prototype.setQuery = function(query) {
+	this.query = query;
+};
+
+/**
+ *	The setLookup method sets the lookup class variable. (Setter method)
+ *	@param lookup - Accepts a string that will be used as the lookup key.
+ */
+com.aa.i11l.utils.toolkit.filter.prototype.setLookup = function(lookup) {
+	this.lookup = lookup;
+};
+
+/**
+ *	The applyFilter method loops through the query section of the filter object
+ *  and compares each property value in the object against the argument string.
+ *  If a match is found the match key is used to lookup the value in the lookup
+ *  section of the filter object and if the value is not undefined it is returned
+ *
+ *	@param value - Accepts a string that will be used as the lookup key.
+ *  @return - String value
+ */
+com.aa.i11l.utils.toolkit.filter.prototype.applyFilter = function(value, lengthRule) {
+	var filteredValue = value.toLowerCase();
+	if(filteredValue.length > (parseInt(lengthRule, 10))) {
+	    for(prop in this.filterObjRef[this.query]) {
+		    if(this.filterObjRef[this.query][prop] === filteredValue) {
+			    filteredValue = this.filterObjRef[this.lookup][prop];
+			    break;
+		    }
+	    }
+	    // If filteredValue is undefined we could not find a lookup match
+	    // so we throw an error and revert filteredValue to its original value
+	    if(typeof filteredValue === 'undefined') {
+		    throw new Error('A fatal API exception occurred at com.aa.i11l.utils.'+
+			                'toolkit.filter.prototype.applyFilter (Lookup value was '+
+							'not found)');
+		    filteredValue = value; // Revert value to original method arg
+	    }
+    }
+	return filteredValue;
+};
+
+/**
+ *	The useAppContextFilter method allows us to use the app context framework for
+ *  filtering. This makes it convienient to look up specified keys in a complex object.
+ *  The useAppContextFilter uses the values specified in the config to do the object
+ *  query. The method takes an object as an argument and updates the relevant values
+ *  according to the filter settings.
+ *
+ *	@param inputObj - Accepts an input object.
+ *	@param filterId - Accepts a string id to identify the filter section in the context.
+ */
+com.aa.i11l.utils.toolkit.filter.prototype.useAppContextFilter = function(inputObj,
+	                                                                      filterId,
+																		  lengthRule) {
+    var propVal;
+	var appContext = application.context.getAppContext();
+	try {
+        for(prop in appContext[filterId]) {
+            propVal = appContext[filterId][prop];
+			if(typeof inputObj[propVal] !== 'undefined') {
+                inputObj[propVal] = this.applyFilter(inputObj[propVal], lengthRule);
+			}
+	    }
+	}
+	catch(err) {
+		throw new Error('A fatal API exception occurred at com.aa.i11l.utils.toolkit.'+
+			            'filter.prototype.useAppContextFilter '+
+						'(One or more required objects where not found at runtime)');
+	}
+};
+
+/*  ======================================================================
+ *    Begins application utility classes
+ *    Namespace: com.aa.i11l.utils.application
+ *  ======================================================================
+ */
+
+Namespace.Manager.Register("com.aa.i11l.utils.application");  // application classes
+Namespace.Manager.Register("application");                    // Static class
+
+/**
+ *	The application context class provides methods for accesing the application context,
+ *  which can be used to set application configuration values.
+ *  Namespace: com.aa.i11l.util.application
+ *	@author: Oliver Ammann
+ */
+com.aa.i11l.utils.application.applicationContext = function() { };
+
+/**
+ *	The getInitProperty method allows you to query the context using a key.
+ *
+ *  @param prop - Passes the property key.
+ *  @return - Property value for the key.
+ */
+com.aa.i11l.utils.application.applicationContext.prototype.getInitProperty =
+	function(prop) {
+	var propValue = null;
+	try {
+		var appRes = this.getAppContext();
+		propValue = appRes[prop];
+	}
+	catch(err) { }
+
+	if(typeof propValue === 'undefined' || propValue === null) {
+		throw new Error('A fatal API exception occurred at com.aa.i11l.app.resources'+
+						' (Object read error occurred at runtime)');
+	}
+	else {
+	    return propValue;
+	}
+};
+
+/**
+ *	The getAppContext method tries to set up the reference to the app context object.
+ *  and returns the reference to the caller.
+ *
+ *  @return - Context object reference or null if not found
+ */
+com.aa.i11l.utils.application.applicationContext.prototype.getAppContext = function() {
+	var appContext = null;
+	try {
+		var appContext = com.aa.i11l.app.resources;
+	}
+	catch(err) { }
+
+	if(appContext === null) {
+		throw new Error('A fatal API exception occurred at com.aa.i11l.app.resources'+
+						' (Object read error occurred at runtime)');
+	}
+	return appContext;
+};
+
+// Provides a static reference to the application context class
+// E.G. var val = application.context.getInitProperty(key);
+// This ensures that once the utils file is added to the page the application
+// context is available to any applications that may need it
+application.context = new com.aa.i11l.utils.application.applicationContext();
+
+
+/*  ======================================================================
+ *    Begins analytic utility classes
+ *    Namespace: com.aa.i11l.utils.analytics
+ *  ======================================================================
+ */
+
+Namespace.Manager.Register("com.aa.i11l.utils.analytics");  // application classes
+
+/* Module tracking classs */
+com.aa.i11l.utils.analytics.Modules = function() {
+	this.callBackUrl = '/content/images/common/wa2.gif?Log=1';
+};
+
+/**
+ *	doFormRead reads the generated Amadeus form and appends the
+ *  name value pairs in a URL query string format
+ *
+ *  @param - Passes the form reference
+ */
+com.aa.i11l.utils.analytics.Modules.prototype.doFormRead = function (form) {
+    var vo = "&v_formName="+form.name;
+	var item;
+	var formitem;
+	var formvalue;
+	for(var i = 0; i < form.length; i++) {
+	    var item = form.elements[i];
+		var elType = form.elements[i].type;
+		if(elType == "text" || elType == "hidden") {
+			// Ensures the we do not track personally identifiable info on retrieve PNR
+			if(item.name != 'DIRECT_RETRIEVE_LASTNAME') {
+				formitem = "v_"+item.name;
+				formvalue = item.value;
+				vo+="&"+formitem+"="+formvalue;
+			}
+        }
+    }
+	this.createPassBack(vo);
+};
+
+/**
+ *	createPassBack creates a http call to the web analytics pixel
+ *  and appends the form name value pairs
+ *
+ *  @param - passback contains query string to be appended to the request
+ */
+com.aa.i11l.utils.analytics.Modules.prototype.createPassBack = function (passback) {
+	var lc=new Image();
+    var url = this.callBackUrl;
+	lc.src=url+encodeURI(passback);
+};
+
+// Create a static reference for analytics class
+AAI11L.analytics = new com.aa.i11l.utils.analytics.Modules();
+
+
+
+/*  ======================================================================
+ *    Copyright 2010 American Airlines, Inc. All rights reserved.
+ *
+ *	  utils.ui - UI UTILITY LIB
+ *    VERSION 1.0 (Release date 07/30/10)
+ *  ======================================================================
+ */
+
+ /*  ======================================================================
+ *    Amadeus UI handling class
+ *	  Namespace: com.aa.i11l.ui.amadeus
+ *  ======================================================================
+ */
+
+Namespace.Manager.Register("com.aa.i11l.ui.amadeus"); // Declares namespace
+
+com.aa.i11l.ui.amadeus.connector = function(resources) {
+	this.da = new com.aa.i11l.utils.dom.actions();
+	try {
+		this.interstitialImg = resources.html.interstitialImg;
+	}
+	catch (err)
+	{
+		 this.interstitialImg = null;
+	}
+	try {
+		this.locale = com.aa.i11l.app.acg.resources.lang.text.locale;
+	}
+	catch (err)
+	{
+		 this.locale = null;
+	}
+
+	this.date = new Date();
+};
+
+com.aa.i11l.ui.amadeus.connector.prototype.transition = function(dataSrc, flowType) {
+	try {
+        jQuery("body").aaBusy({
+            message: com.aa.i11l.app.acg.resources.lang.text.waitpageLoading,
+            form: this
+        }).start();
+
+		var outStr = [];
+
+		outStr.push('<div style="display:none">');
+		outStr.push('<form id="');
+		outStr.push(dataSrc.settings.ID);
+		outStr.push('-GEN" name="');
+		outStr.push(dataSrc.settings.ID);
+		outStr.push('" accept-charset="');
+		outStr.push(dataSrc.settings.ENCODING);
+		outStr.push('" action="');
+		outStr.push(dataSrc.settings.DOMAIN);
+
+        var interstitialcntry = null;
+        try{
+            interstitialcntry = com.aa.i11l.app.acg.resources.lang.text.country;
+        }
+        catch(interstitialcntryErr) {
+            interstitialcntry = null;
+        }
+
+		if ((document.cookie.indexOf('v1st')>-1) && (interstitialcntry == 'IT')){
+			outStr.push('?cd='); //cookie origin domain
+			outStr.push(document.location.hostname);
+		}
+
+		outStr.push('" method="');
+		outStr.push(dataSrc.settings.METHOD);
+		outStr.push('">');
+
+
+		for (prop in dataSrc['siteOverrides']) {
+			if(dataSrc['siteOverrides'][prop] !== '') {
+				outStr.push('<input type="text" name="');
+				outStr.push(prop);
+				outStr.push('" value="');
+				outStr.push(dataSrc['siteOverrides'][prop]);
+				outStr.push('">');
+			}
+		}
+		for (prop in dataSrc[flowType]) {
+			if(dataSrc[flowType][prop] !== '') {
+				outStr.push('<input type="text" name="');
+				outStr.push(prop);
+				outStr.push('" value="');
+				outStr.push(dataSrc[flowType][prop]);
+				outStr.push('">');
+			}
+		}
+		for (prop in dataSrc['search']) {
+			if(dataSrc['search'][prop] !== '' && dataSrc['search'][prop] !== undefined) {
+				outStr.push('<input type="text" name="');
+				outStr.push(prop);
+				outStr.push('" value="');
+				outStr.push(dataSrc['search'][prop].toUpperCase());
+				outStr.push('">');
+			}
+		}
+
+
+		//Add Business Extra functionality 15Dec 10 AOleary
+		//If the Business Extraa field exists use the BX global overrides rather than the standard global overrides for that market
+		var bxExtra = '';
+		if (document.getElementById('bxInput') !== null) {//check if Business Extraa field exists
+			bxExtra = document.getElementById('bxInput').value//if so, get the value of the field i.e. the BX number entered by the pax
+		}
+		if (bxExtra !== '') {
+			outStr.push('<textarea name="SO_GL" rows="6" cols="80">');
+			outStr.push('<?xml version="1.0" encoding="iso-8859-1"?>');
+			outStr.push(com.aa.i11l.amadeus.eRetail.config.local.globalOverridesBX.OPEN);
+			//add the actual Business Extraa number to the override
+			outStr.push(com.aa.i11l.amadeus.eRetail.config.local.globalOverridesBX.generic.replace(/bxExtra/,bxExtra));
+			outStr.push(com.aa.i11l.amadeus.eRetail.config.local.globalOverridesBX[flowType]);
+			outStr.push(com.aa.i11l.amadeus.eRetail.config.local.globalOverridesBX.CLOSE);
+			outStr.push('</textarea>');
+		}
+		else if (dataSrc.globalOverrides.OPEN !== '' &&
+			typeof dataSrc.globalOverrides.OPEN !== 'undefined') {
+			outStr.push('<textarea name="SO_GL" rows="6" cols="80">');
+			outStr.push('<?xml version="1.0" encoding="iso-8859-1"?>');
+			outStr.push(dataSrc.globalOverrides.OPEN);
+
+				/** except for student promosearch **/
+				if ( dataSrc.settings.ID == 'studentPromoSearch') {
+						outStr.push(dataSrc.globalOverrides.generic);
+				}
+				outStr.push(dataSrc.globalOverrides.generic);
+
+
+			outStr.push(dataSrc.globalOverrides[flowType]);
+			try {
+				//Choice product config
+				if (com.aa.i11l.amadeus.eRetail.config.global.choice.override != '') {
+					outStr.push(com.aa.i11l.amadeus.eRetail.config.global.choice.override);
+				}
+			}
+			catch(e){
+			}
+
+			outStr.push(dataSrc.globalOverrides.CLOSE);
+			outStr.push('</textarea>');
+		}
+		outStr.push('</form>');
+		outStr.push('</div>');
+
+		jQuery('body').append(outStr.join('')).css('overflow','hidden');
+		//jQuery('#'+uuid).bgiframe();
+		jQuery('.ui-widget-overlay, .ui-dialog').hide(); //hide any open dialogs
+
+		// Call analytics function defined in utils.core to track form variables
+		AAI11L.analytics.doFormRead(document.forms[dataSrc.settings.ID+'-GEN']);
+
+        // Cookie users to make sure that content links will work in the booking path
+        var img = document.createElement('img');
+        img.src = "//www.aa.com/intl/ie/apps/IWCommon/mseCookie.jsp?locale=" + com.aa.i11l.app.acg.resources.lang.text.locale;
+        img.style.cssText = 'display:none;';
+        document.body.appendChild(img);
+
+		//pass GA details, not in FORM ONSUBMIT because that's not triggered by the DOM Object submit() function below
+		try{
+			_gaq.push(['_linkByPost', document.getElementById(dataSrc.settings.ID+'-GEN')]);
+		}catch(e){
+			//no GA code
+		}
+
+		setTimeout("document.getElementById('"+dataSrc.settings.ID+"-GEN').submit();", 1000);
+
+	}
+	catch(err) {
+		throw new Error('A fatal API exception occurred at com.aa.i11l.ui.amadeus.' +
+			'connector.prototype.transition - Unable to read data source');
+	}
+};
+
+com.aa.i11l.ui.amadeus.connector.prototype.displayErrFlag = function(idArr, errorFlags) {
+	try {
+		for(i = 0; i < errorFlags; i++) {
+			if(errorFlags[i] === 1) {
+				this.da.createDomRef(idArr[i]).style.display = 'block';
+			}
+		}
+	}
+	catch(err) {
+		throw new Error('A fatal API exception occurred at com.aa.i11l.ui.amadeus.' +
+			'connector.prototype.displayErrFlag - Read or write error ocurred at runtime');
+	}
+};
+
+// Prototype this method if you need to customize it
+com.aa.i11l.ui.amadeus.connector.prototype.apiErrOut = function(errors, errorFlags, formName) {
+	alert(formName);
+	alert(errors.toString());
+	alert(errorFlags.toString());
+};
+
+com.aa.i11l.ui.amadeus.connector.prototype.errOut = function(
+	dataSrc, ignoreFlag, errHolderId, errHeaderId, errOutputId) {
+	try {
+		var errHolder = this.da.createDomRef(errHolderId);
+		var errHeader = this.da.createDomRef(errHeaderId);
+		var errOutput = this.da.createDomRef(errOutputId);
+        errHeader.innerHTML += '<strong>' + dataSrc.errorHeader + '</strong><br />';
+		for (i = 0; i < dataSrc['valueError'].length; i++) {
+			if(dataSrc['valueError'][i] !== ignoreFlag) {
+				errOutput.innerHTML += dataSrc['valueError'][i] + '<br />';
+			}
+		}
+		errHolder.style.display = 'block';
+	}
+	catch(err) {
+		throw new Error('A fatal API exception occurred at com.aa.i11l.ui.amadeus.' +
+			'connector.prototype.errOut - Read or write error ocurred at runtime');
+	}
+};
+
+com.aa.i11l.ui.amadeus.connector.prototype.clearErr = function(
+	errHolderId, errHeaderId, errOutputId) {
+	try {
+        this.da.createDomRef(errHolderId).style.display = 'none';
+		this.da.createDomRef(errHeaderId).innerHTML = '';
+		this.da.createDomRef(errOutputId).innerHTML = '';
+	}
+	catch(err) {
+		throw new Error('A fatal API exception occurred at com.aa.i11l.ui.amadeus.' +
+			'connector.prototype.clearErr - Read or write error ocurred at runtime');
+	}
+};
+
+/*  ======================================================================
+ *    smart UI handling class
+ *	  Namespace: com.aa.i11l.ui.smartUI
+ *  ======================================================================
+ */
+
+Namespace.Manager.Register("com.aa.i11l.ui.smartUI"); // Declares namespace
+
+com.aa.i11l.ui.smartUI.behaviour = function() {
+	this.da = new com.aa.i11l.utils.dom.actions();
+};
+
+com.aa.i11l.ui.smartUI.behaviour.prototype.bindSelects = function(argObj) {
+	var master = this.da.createDomRef(argObj.master);
+	var slave = this.da.createDomRef(argObj.slave);
+	if(master !== null && slave !== null) {
+		var masterValue = parseInt(master.options[master.selectedIndex].value, 10);
+		var diff;
+		var max = parseInt(argObj.maximum, 10);
+		// If the master value exceeds the specified max we set the
+		// diff to zero and change the command to decrement. This ensures
+		// that all slave fields are set to 0
+		if (masterValue > max) {
+			diff = 0;
+			argObj.command = 'decrement';
+		}
+		else {
+			diff = max - masterValue;
+		}
+		var slaveIndex = slave.selectedIndex;
+
+		if(!isNaN(masterValue) && !isNaN(diff)) {
+			var stop = 0;
+			if(argObj.command === 'equal') {
+				stop = masterValue;
+			}
+			else if(argObj.command === 'decrement') {
+				stop = diff;
+			}
+
+			this.addOptions(slave, argObj.startAtZero, stop, argObj.optionsObj);
+			if (slaveIndex > slave.options.length)
+			{
+				slaveIndex = slave.options.length-1;
+			}
+			if(argObj.rememberIndex) {
+				this.selectIndex(slave, slaveIndex);
+			}
+
+		}
+		else {
+			throw new Error('A fatal API exception occurred at com.aa.i11l.ui.smartUI.' +
+				'.behaviour.prototype.bindSelects - NaN error occurred at var '+
+				'masterValue or at var diff');
+		}
+	}
+};
+
+com.aa.i11l.ui.smartUI.behaviour.prototype.addDropDownControl = function () {
+	var listener = new com.aa.i11l.utils.event.listener();
+	// Add our listeners
+	jQuery(document).ready(function($) {
+		jQuery('.paxitem select').change(
+			function(e) {
+				var f = this.form,
+					adultId = jQuery('[name="numberOfAdults"], [name="adultPassengerCount"]',f).attr('id'),
+					childId = jQuery('[name="numberOfChildren"], [name="childPassengerCount"]',f).attr('id'),
+					infantId = jQuery('[name="numberOfInfants"]',f).attr('id'),
+					sui = new com.aa.i11l.ui.smartUI.behaviour();
+					var mcaadv = false;
+					if ((this.id.indexOf('mc-') == 0) && (jQuery('#mcDialog').data('type') == 'aadv'))//MC dialog
+					{
+						mcaadv = true;
+					}
+
+				if (this.id == adultId){
+
+					if ((this.name == 'adultPassengerCount') || (mcaadv)) //aadvantage
+					{
+						sui.bindSelects({
+							master: adultId,
+							slave: childId,
+							maximum: '6',
+							command: 'decrement',
+							startAtZero: true,
+							rememberIndex: true
+						});
+					}
+					else{
+						sui.bindSelects({
+							master: adultId,
+							slave: childId,
+							maximum: '7',
+							command: 'decrement',
+							startAtZero: true,
+							rememberIndex: true
+						});
+						if (infantId != ''){
+							sui.bindSelects({
+								master: adultId,
+								slave: infantId,
+								maximum: '7',
+								command: 'equal',
+								startAtZero: true,
+								rememberIndex: false
+							});
+						}
+					}
+
+				}
+				else if (this.id == childId){
+
+					if ((this.name == 'childPassengerCount') || (mcaadv))//aadvantage
+					{
+						sui.bindSelects({
+							master: childId,
+							slave: adultId,
+							maximum: '6',
+							command: 'decrement',
+							startAtZero: false,
+							rememberIndex: true
+						});
+					}
+					else{
+						sui.bindSelects({
+							master: childId,
+							slave: adultId,
+							maximum: '7',
+							command: 'decrement',
+							startAtZero: false,
+							rememberIndex: true
+						});
+					}
+				}
+			}
+		);
+
+		//reset all selects
+		jQuery('.paxitem select').each(function(){this.selectedIndex = 0;});
+	});
+};
+
+com.aa.i11l.ui.smartUI.behaviour.prototype.addOptions = function(ref, startAtZero, stop, optionsObj) {
+	ref.options.length = 0;
+
+
+	if (!optionsObj) {
+		var optionsObj = [];
+
+		for(i = 0; i <= stop; i++) {
+			optionsObj[i] = {};
+			optionsObj[i].val = i;
+			optionsObj[i].text = i;
+		}
+	}
+
+	for(i = 0; i <= stop; i++) {
+		if(startAtZero) {
+			ref.options[i] = new Option(optionsObj[i].text, optionsObj[i].val);
+		}
+		else if(i > 0) {
+			ref.options[i-1] = new Option(optionsObj[i].text, optionsObj[i].val);
+		}
+	}
+};
+
+com.aa.i11l.ui.smartUI.behaviour.prototype.addOptionsFromConfig = function(
+	ref, resource, index) {
+    ref.options.length = index;
+	for(prop in resource) {
+		ref.options[index] = new Option(resource[prop], prop);
+		index++;
+	}
+};
+
+com.aa.i11l.ui.smartUI.behaviour.prototype.selectIndex = function(ref, index) {
+	ref.selectedIndex = index;
+};
+
+com.aa.i11l.ui.smartUI.behaviour.prototype.enableDisable = function(el, disabled) {
+	try {
+		el.disabled = disabled;
+	}
+	catch(err) {}
+	if(el.childNodes && el.childNodes.length > 0) {
+		for(var x = 0; x < el.childNodes.length; x++) {
+			this.enableDisable(el.childNodes[x], disabled);
+		}
+	}
+};
+
+/* Hides progress div and displays content div */
+
+com.aa.i11l.ui.smartUI.behaviour.prototype.doProgressAbort = function(contId, indicId) {
+    this.da.createDomRef(contId).style.display = 'inline';
+    this.da.createDomRef(indicId).style.display = 'none';
+};
+
+
+
+
+
+/*  ======================================================================
+ *    Copyright 2010 American Airlines, Inc. All rights reserved.
+ *
+ *	  app.acg.controller - Amadeus connector gateway controller classes
+ *    VERSION 1.0 (Release date 07/30/10)
+ *  ======================================================================
+ */
+
+ // Register Namespaces. Dependency: utils.js
+Namespace.Manager.Register("com.aa.i11l.amadeus.eRetail.c"); // e-retail app Controller
+Namespace.Manager.Register("com.aa.i11l.registerListener"); // Listener
+
+/**
+ *	handler implements the controller class (actionHandler)
+ *  Namespace: com.aa.i11l.amadeus.eRetail.c
+ *	@author: Oliver Ammann
+ */
+com.aa.i11l.amadeus.eRetail.c.handler = function () {};
+
+com.aa.i11l.amadeus.eRetail.c.handler.prototype.execute = function (e) {
+	// Get config refrences from the application context
+	var tripFlowObj = application.context.getInitProperty('tripFlowObject');
+	var uiResources = application.context.getInitProperty('uiResources');
+	// Set global and local config object references
+	var globalConfig = com.aa.i11l.amadeus.eRetail.config.global;
+	var localConfig = com.aa.i11l.amadeus.eRetail.config.local;
+    // Instantiate objects required by controller
+    this.actionHandler = new com.aa.i11l.amadeus.eRetail.c.actionHandler();
+    this.actionForm = new com.aa.i11l.utils.forms.actionForm();
+    this.directInput = new com.aa.i11l.amadeus.eRetail.c.directInput();
+    this.formatTransform = new com.aa.i11l.amadeus.eRetail.c.formatTransform();
+    this.acUI = new com.aa.i11l.ui.amadeus.connector(uiResources);
+    this.da = new com.aa.i11l.utils.dom.actions();
+	this.eventHandler = new com.aa.i11l.utils.event.handler();
+
+	// Check app resource data structure to see if mapping validation should be used
+	// and store in local useMapping variable
+    var useMapping = application.context.getInitProperty('useMapping');
+    var error = false;
+
+	// Prevents the default browser event from occuring. In this case the submit event
+	this.eventHandler.preventDefaultAction(e);
+
+	// Get dom ref for target form
+    var form = this.actionHandler.getTargetElement(e);
+	// Set this.form var in preparation for form read
+    this.actionForm.setForm(form);
+	// Read form contents into a JSON formatted string.
+    this.actionForm.doFormRead();
+	// Get the JSON data structure representing the form values
+    this.objStr = this.actionForm.getJsonStr();
+	// Run the data structure through the direct input interface to strip out any
+	// direct input params and update the relevant config structure with the direct
+	// input parameters.
+    this.actionObj = this.directInput.execute(
+		this.objStr, localConfig);
+
+	// Transform calendar date format into seperate month day and year tokens
+	// How the date format is to be parsed is defined in the app resource data structure
+	this.formatTransform.calendarToDayAndMonth(
+		this.actionObj, application.context.getInitProperty('dateLabel'),
+		application.context.getInitProperty('dateDelimeter'),
+		application.context.getInitProperty('dayLabel'),
+		application.context.getInitProperty('monthLabel'),
+		application.context.getInitProperty('dateFormat'),
+		application.context.getInitProperty('yearPosition'));
+
+	// if use mapping is true validate form data structure against the mapping
+	// for that form id.
+    if (useMapping) {
+        this.validation = new com.aa.i11l.amadeus.eRetail.c.validation(
+			com.aa.i11l.mappings.actionMapping, this.actionObj.locale,
+			com.aa.i11l.app.acg.resources.lang);
+        error = this.validation.dataValidation(this.actionObj);
+    }
+	// If no error occurred after validation create an instance of the e-retail app
+	// and pass the data structures that will be used by the application
+    if (!error) {
+        this.acg = new com.aa.i11l.amadeus.eRetail.m.acg({
+            'g_config': globalConfig,
+            'l_config': localConfig,
+            'action_obj': this.actionObj,
+            'search_flow': tripFlowObj
+        });
+		// Returns the final output data structure, which will be used to build the
+		// form that is submitted to e-retail
+        var searchDataObj = this.acg.dispatcher();
+		// Builds the HTML form
+        this.acUI.transition(searchDataObj, this.actionObj.flowType);
+    }
+	else {
+		// If an error occurred output the errors
+        this.acUI.apiErrOut(this.validation.getErrors(), this.validation.getErrorFlags(), form.name);
+		return false;
+    }
+};
+
+/**
+ *	actionHandler determines which element should be processed by the controller
+ *  Namespace: com.aa.i11l.amadeus.eRetail.c
+ *	@author: Oliver Ammann
+ */
+com.aa.i11l.amadeus.eRetail.c.actionHandler = function () {};
+
+com.aa.i11l.amadeus.eRetail.c.actionHandler.prototype.getTargetElement = function (obj) {
+    var targetElement = null;
+    if (typeof obj.target !== 'undefined') {
+        targetElement = obj.target;
+    }
+	else {
+        targetElement = obj.srcElement;
+    }
+    return targetElement;
+};
+
+/**
+ *	The directInput class offers an override interface, which directly accepts
+ *  Amadeus HTML connector parameters from the form. It updates or augments the
+ *  form specific config data structure for the submitted form
+ *  Namespace: com.aa.i11l.amadeus.eRetail.c
+ *	@author: Oliver Ammann
+ */
+com.aa.i11l.amadeus.eRetail.c.directInput = function () {};
+
+com.aa.i11l.amadeus.eRetail.c.directInput.prototype.execute = function (objStr, configPath) {
+    var ou = new com.aa.i11l.utils.toolkit.objectUtils();
+    var obj = ou.createObject(objStr);
+    var cp = configPath[obj.formName] || {}; //default empty obj
+    var stdObj;
+    if (obj.direct_input === 'true') {
+        var diObj;
+        var diStr = this.splitDirectInput(objStr, '"direct_input":"true"');
+        stdObj = ou.createObject(diStr["stdObjStr"]);
+        if (obj.site_overrides === 'true') {
+            diObj = this.createDIObject(
+				"site_overrides", "flowType_overrides", ou.createObject(diStr["diObjStr"]));
+			if (!cp["siteOverrides"]) {
+				cp["siteOverrides"] = {};
+			}
+            ou.copyAllFields(diObj, cp["siteOverrides"]);
+        }
+        if (obj.flowType_overrides === 'true') {
+            diObj = this.createDIObject(
+				"flowType_overrides", "global_overrides", ou.createObject(diStr["diObjStr"]));
+			if (!cp[obj.flowType]) {
+				cp[obj.flowType] = {};
+			}
+            ou.copyAllFields(diObj, cp[obj.flowType]);
+        }
+        if (obj.global_overrides === 'true') {
+            diObj = this.createDIObject(
+				"global_overrides", "settings", ou.createObject(diStr["diObjStr"]));
+			if (!cp["globalOverrides"]) {
+				cp["globalOverrides"] = {};
+			}
+            ou.copyAllFields(diObj, cp["globalOverrides"]);
+        }
+        if (obj.settings === 'true') {
+            diObj = this.createDIObject(
+				"settings", "cff", ou.createObject(diStr["diObjStr"]));
+			if (!cp["settings"]) {
+				cp["settings"] = {};
+			}
+            ou.copyAllFields(diObj, cp["settings"]);
+        }
+        if (obj.cff === 'true') {
+            diObj = this.createDIObject("cff", null, ou.createObject(diStr["diObjStr"]));
+			if (!cp["cff"]) {
+				cp["cff"] = {};
+			}
+            ou.copyAllFields(diObj, cp["cff"]);
+        }
+    }
+	else if (obj.direct_input === 'false') {
+        var temp = this.splitDirectInput(objStr, '"direct_input":"false"');
+        stdObj = ou.createObject(temp["stdObjStr"]);
+    }
+	else {
+        stdObj = obj;
+    }
+    return stdObj;
+};
+
+com.aa.i11l.amadeus.eRetail.c.directInput.prototype.splitDirectInput = function (
+	objStr, delimeter) {
+	var objStrArray = [];
+    var temp = objStr.split(delimeter);
+    if (temp[0].charAt((temp[0].length - 1)) === ',') {
+        temp[0] = temp[0].slice(0, (temp[0].length - 1));
+    }
+    if (temp[1].charAt(0) === ',') {
+        temp[1] = temp[1].slice(1, temp[1].length);
+    }
+    objStrArray["stdObjStr"] = temp[0] + '}';
+    objStrArray["diObjStr"] = '{' + temp[1];
+    return objStrArray;
+};
+
+com.aa.i11l.amadeus.eRetail.c.directInput.prototype.createDIObject = function (
+	begin, end, obj) {
+	var outputObj = {};
+    var count = 0;
+    for (prop in obj) {
+        if (prop === begin || count > 0) {
+            if (prop !== end) {
+                if (prop !== begin) {
+                    outputObj[prop] = obj[prop];
+                }
+                count++;
+            }
+			else {
+                break;
+            }
+        }
+    }
+    return outputObj;
+};
+
+/**
+ *	The formatTransform class offers a method to parse date string formats into
+ *  individual day, month and year tokens
+ *  Namespace: com.aa.i11l.amadeus.eRetail.c
+ *	@author: Oliver Ammann
+ */
+com.aa.i11l.amadeus.eRetail.c.formatTransform = function () {
+    this.ou = new com.aa.i11l.utils.toolkit.objectUtils();
+};
+com.aa.i11l.amadeus.eRetail.c.formatTransform.prototype.calendarToDayAndMonth = function (
+	tObj, dateKey, delimeter, dayStr, monthStr, dateFormat, yearPos) {
+    var count = 1;
+    var objStr = '';
+	var dayIndex = 0;
+	var monthIndex = 1;
+	//If date format is US month comes first then day
+	if (dateFormat === 'us') {
+		monthIndex = 0;
+		dayIndex = 1;
+	}
+	// If year is at the beginning increment day and month indexes
+	if (yearPos === 'first') {
+		monthIndex++;
+		dayIndex++;
+	}
+    for (prop in tObj) {
+        var re = dateKey + '\\d+$';
+		if (new RegExp(re).test(prop)) {
+            var val = tObj[prop];
+            var valArr = val.split(delimeter);
+            objStr += '"' + monthStr + count + '": "' + parseInt(valArr[monthIndex], 10) + '",';
+            objStr += '"' + dayStr + count + '": "' + parseInt(valArr[dayIndex], 10) + '",';
+            count++;
+        }
+    }
+    if (objStr.charAt(objStr.length - 1) === ',') {
+        objStr = objStr.slice(0, -1);
+    }
+    var obj = this.ou.createObject('{' + objStr + '}');
+    this.ou.transform(tObj, dateKey, obj);
+};
+
+/**
+ *	The validation class offers methods to validate input data against a specified
+ *  mapping, which is contained in a JSON data structure
+ *  Namespace: com.aa.i11l.amadeus.eRetail.c
+ *	@author: Oliver Ammann
+ */
+com.aa.i11l.amadeus.eRetail.c.validation = function (mapping, locale, langResources) {
+    this.errorFound = false;
+    this.actionMapping = mapping;
+	this.langRes = langResources;
+    this.errors = [];
+	this.errorFlags = [];
+	this.locale = new com.aa.i11l.utils.i18n.localeUtils();
+	this.locale.processLocale(locale);
+	this.locale.setGlobalConfig(langResources);
+    this.locale.setLocalConfig(langResources);
+};
+com.aa.i11l.amadeus.eRetail.c.validation.prototype.getErrors = function () {
+    return this.errors;
+};
+com.aa.i11l.amadeus.eRetail.c.validation.prototype.getErrorFlags = function () {
+    return this.errorFlags;
+};
+com.aa.i11l.amadeus.eRetail.c.validation.prototype.formIdFound = function (id) {
+    if (!this.actionMapping[id]) {
+        return false;
+    }
+	else {
+        return true;
+    }
+};
+com.aa.i11l.amadeus.eRetail.c.validation.prototype.checkData = function (formName, obj) {
+    var error = false;
+	var matchCount = 0;
+	var nameCount = this.actionMapping[formName]['names'].length;
+	var depend = this.actionMapping[formName]['depend']||[];//optional
+    for (prop in obj) {
+
+		var index = this.actionMapping[formName]['names'].indexOf(prop);
+		if ( index != -1) {
+			matchCount++;
+
+			var dependIndex = depend.indexOf(prop);
+			if (dependIndex > -1) //depends on another field's value
+			{
+				var otherField = obj[depend[dependIndex+1][0]],
+					condition  = depend[dependIndex+1][1],
+					otherValue = depend[dependIndex+1][2];
+
+				switch (condition) {
+					case '=':
+						if (otherField != otherValue)
+							continue;
+						break;
+					case '<':
+						if (otherField >= otherValue)
+							continue;
+						break;
+					case '>':
+						if (otherField <= otherValue)
+							continue;
+						break;
+				}
+
+			}
+
+			var re = new RegExp(this.actionMapping[formName]['values'][index]);
+            if (!re.test(obj[prop])) {
+				error = true;
+				this.errors.push(
+					this.locale.getLocaleString(
+						this.actionMapping[formName]['errors'][index], this.langRes)
+				);
+				this.errorFlags.push(prop);
+			}
+        }
+    }
+	if (matchCount !== nameCount) {
+		throw new Error(
+			'A fatal API exception occurred at com.aa.i11l.amadeus'+
+			'.eRetail.c.validation.prototype.checkData'+
+			' (One or more mapped parameters were not found)'
+		);
+	}
+    return error;
+};
+com.aa.i11l.amadeus.eRetail.c.validation.prototype.dataValidation = function (dataObj) {
+    var formName = dataObj.formName;
+    var idFound = this.formIdFound(formName);
+    if (idFound) {
+        this.errorFound = this.checkData(formName, dataObj);
+    }
+	else {
+		throw new Error(
+			'A fatal API exception occurred at com.aa.i11l.amadeus'+
+			'.eRetail.c.validation.prototype.dataValidation'+
+			' (Mapping not found)'
+		);
+        this.errorFound = true;
+    }
+    return this.errorFound
+};
+/**
+ *	The RegisterACGForm class handles the registration of forms that want to use ACG
+ *  Namespace: com.aa.i11l.amadeus.eRetail.c
+ */
+com.aa.i11l.amadeus.eRetail.c.RegisterACGForm = function () {};
+
+com.aa.i11l.amadeus.eRetail.c.RegisterACGForm.prototype.register = function (name, action) {
+	jQuery(document).ready(function($) {
+		jQuery('form[name="'+name+'"]').bind(action,
+			function(e) {
+				var handler = new com.aa.i11l.amadeus.eRetail.c.handler();
+				handler.execute(e);
+			}
+
+		);
+	});
+};
+
+
+
+/*  ======================================================================
+ *    Copyright 2010 American Airlines, Inc. All rights reserved.
+ *
+ *	  app.acg.core - Amadeus connector gateway core classes
+ *    VERSION 1.0 (Release date 07/30/10)
+ *  ======================================================================
+ */
+
+Namespace.Manager.Register("com.aa.i11l.amadeus.eRetail.m");
+
+/**
+ *	The acg class provides the entry point into the core application
+ *  It takes the application initialisation parameters and provides a
+ *  single dispatcher method, which creates the relevant objects and
+ *  controls the application flow
+ *
+ *	@param init - Accepts an object that represents the init parameters.
+ *  the init object contains the following:
+ *  1. A reference to the global configuration data structure
+ *  2. A reference to the local configuration data structure
+ *  3. The object representation of the form field search data
+ *  4. A reference to the top level out put data structure (Trip flow data object)
+ *  Sample init object:
+ *  {
+ *      'g_config': com.aa.i11l.amadeus.eRetail.config.global,
+ *      'l_config': com.aa.i11l.amadeus.eRetail.config.local,
+ *      'action_obj': this.actionObj,
+ *      'search_flow': com.aa.i11l.app.acg.resources.tfdo
+ *   }
+ */
+// Constructor
+com.aa.i11l.amadeus.eRetail.m.acg = function (init) {
+	// Refrence to global config object
+    this.globalConfig = init.g_config;
+	// Refrence to local config object
+    this.localConfig = init.l_config;
+	// Raw JSON form object as read from the search form
+    this.userSearchInputObj = init.action_obj;
+	// Raw JSON object will be mapped onto this structured object
+	// com.aa.i11l.amadeus.eRetail.osdo is to the partial path
+	// of the object, the complete path will be constructed by dispatcher
+	// as it depends on the flow type passed in the search request.
+	// Example of a complete path would be:
+	// com.aa.i11l.app.acg.resources.osdo['flexPricer']
+    this.orderedSearchDataObj = application.context.getInitProperty('orderedSearchObject');
+	// Final output object that is used for request to e-retail
+    this.userSearchOutputObj = init.search_flow;
+	// Class variable for flowType label
+    this.flowTypeLabel = 'flowType';
+	// Class variable for id label
+    this.id = 'id';
+	// Class variable for cff label
+    this.userSearchCffProp = 'commercialFareFamily';
+	this.useRequestFlowType = application.context.getInitProperty('useRequestFlowType');
+	// Reads app config - returns true if rule filter should be used
+    this.applyFilter = application.context.getInitProperty('filter_activate');
+	// Gets label from app config for the default partition
+    this.settingPartition = application.context.getInitProperty('defaultPartition');
+	// Gets label from app config for the search partition
+    this.searchPartition = application.context.getInitProperty('searchPartition');
+	// Gets label from app config for the override partition
+    this.ovrPartition = application.context.getInitProperty('overridePartition');
+	// Gets label from app config for the global override partition
+    this.globalOvrPartition = application.context.getInitProperty('globalOverridePartition');
+	// Gets label from app config for the cff partition
+    this.cffPartition = application.context.getInitProperty('cffPartition');
+    this.cff;
+};
+/**
+ *	The dispatcher method coordinates the application flow and creates the
+ *  relevant helper objects
+ *
+ *  @return - An object that represents the e-retail trip flow request
+ */
+// The dispatcher method coordinates the request and creates relevant helper objects
+com.aa.i11l.amadeus.eRetail.m.acg.prototype.dispatcher = function () {
+	var osdo = null;
+	var flowType = null;
+	// If this.useRequestFlowType is true we will use the flowtype identifier in the
+	// request to dynamically create the object reference. This is useful if for some
+	// reason we want to use a custom object instead of the default option
+	if (this.useRequestFlowType) {
+		// Create a reference to the output data structure. The output object will
+		// vary depending on the flowtype sent in the form request
+		osdo = this.orderedSearchDataObj[this.userSearchInputObj[this.flowTypeLabel]];
+		// Set the flow type key to the value passed in the request
+		flowType = this.userSearchInputObj[this.flowTypeLabel];
+	}
+	else {
+		// Get the default flow type key from the application config
+		var dft = application.context.getInitProperty('defaultFlowType');
+		// Create the output object
+		osdo = this.orderedSearchDataObj[dft];
+		// Set the flow type key to the default value
+		flowType = dft;
+	}
+	// Creates the CFF identifier based on the class of service in the search request
+    this.cff = this.userSearchInputObj['classOfService'].toUpperCase() + '_CFF';
+	// Create an instance of dataFormat and pass it the user search and output objects
+    var df = new com.aa.i11l.amadeus.eRetail.m.dataFormat(
+		this.userSearchInputObj, osdo, this.globalConfig);
+	// If apply filter is true filter the input object
+    if (this.applyFilter) {
+        df.ruleFilter();
+    }
+	// Formats the search data as per the required Amadeus format
+    df.formatSearchData();
+
+	// Connector is responsible for creating the output data structure that represents
+	// the trip flow request. It combines the formatted user search data with the
+	// the locale specific confifuration data in the config data structures
+	var connector = new com.aa.i11l.amadeus.eRetail.m.connector({
+        'orderedSearchObj': osdo,
+        'cff': this.cff,
+        'cffPar': this.cffPartition,
+        'searchedCff': this.userSearchCffProp,
+        'locale': this.userSearchInputObj.locale,
+        'flow': flowType,
+        'id': this.id,
+        'output': this.userSearchOutputObj,
+        'settingPar': this.settingPartition,
+        'searchPar': this.searchPartition,
+        'globalConfig': this.globalConfig,
+        'localConfig': this.localConfig,
+        'par': [this.settingPartition, this.ovrPartition,
+		        this.userSearchInputObj[this.flowTypeLabel], this.globalOvrPartition]
+    });
+	// Returns the final e-retail object
+    return connector.doPackage();
+};
+/**
+ *	The dataFormat class is responsible for two things.
+ *  1. It provides methods, which transform the raw form input values to the Amadeus
+ *  specific format
+ *  2. It copies the unordered input values and transfers them to the ordered search
+ *  data structure.
+ *
+ *	@param inputObj - Accepts an object that represents raw form name value pairs
+ *	@param outputObj - Accepts an object that represents the ordered search data
+ */
+ // Constructor
+com.aa.i11l.amadeus.eRetail.m.dataFormat = function (inputObj, outputObj, config) {
+    this.inputObj = inputObj;
+    this.outputObj = outputObj;
+	this.config = config;
+    this.originStr = 'origin';
+    this.destStr = 'destination';
+    this.depDateStr = 'departureDate';
+    this.depDayStr = 'departureDay';
+    this.depMonthStr = 'departureMonth';
+    this.depYearStr = 'departureYear';
+    this.depTimeStr = 'departureTime';
+    this.anyDepTimeStr = 'anyDepartureTime';
+    this.numAdtStr = 'numberOfAdults';
+    this.numChdStr = 'numberOfChildren';
+    this.numInfStr = 'numberOfInfants';
+    this.numS65Str = 'numberOfSenior65';
+    this.numSrcStr = 'numberOfSenior';
+    this.numYAdStr = 'numberOfYoungAdult';
+    this.numC04Str = 'numberOfChildren04';
+    this.numLapStr = 'numberOfInfantsLap';
+    this.tvlerTypeStr = 'travellerType';
+    this.hasInfStr = 'hasInfant';
+	this.flowType = 'flowType';
+	this.searchType = 'searchType';
+	this.displayType = 'displayType';
+	this.arrangeBy = 'arrangeBy';
+    this.hasInfValStr = 'TRUE';
+    this.adultValStr = 'ADT';
+    this.childValStr = 'CHD';
+    this.child04ValStr = 'C04';
+    this.seniorValStr = 'SRC';
+    this.senior65ValStr = 'S65';
+    this.youngAdultValStr = 'Y15';
+    this.infantSeatValStr = 'INS';
+    this.objectUtils = new com.aa.i11l.utils.toolkit.objectUtils();
+    this.dateUtils = new com.aa.i11l.utils.date();
+};
+/**
+ *	The ruleFilter method aplies filters based on rules in the application context
+ *  This method is used to filter the raw search data prior to transforming it to
+ *  the Amadeus specific format
+ */
+com.aa.i11l.amadeus.eRetail.m.dataFormat.prototype.ruleFilter = function () {
+	// Get a handle on the filter object in app resources
+    var fs = application.context.getInitProperty('filterSettings');
+	// Create an instance of filter and pass it a reference to the filter data structure
+	// the source object and the lookup object
+    var filter = new com.aa.i11l.utils.toolkit.filter(fs.filter_obj, fs.filter_rules[0],
+		fs.filter_rules[1]);
+	// Use the app context filter to filter the input object and tell it which parameters
+	// to filter on. It also specifies the length the value must be before the filter is
+	// triggered.
+    filter.useAppContextFilter(this.inputObj, fs.filter_rules[2], fs.filter_trigger);
+};
+/**
+ *	The formatSearchData method is the interface into the data format class
+ *  and is responsible for coordinating the flow and calling the helper methods
+ */
+com.aa.i11l.amadeus.eRetail.m.dataFormat.prototype.formatSearchData = function () {
+	var segCount = this.getSegmentCount();
+	// Use the form name as the ID for the output object
+    this.outputObj.id = this.inputObj.formName;
+	// Copy all common fields from the input to the output object
+    this.objectUtils.copyCommonFields(this.inputObj, this.outputObj);
+    // If trip type is return copy dest string 1 to origin string 2
+    // and orgin 1 string to destination string 2 this is required for flexpricer
+    if (this.inputObj.tripType.toUpperCase() === 'R') {
+		segCount++;
+		this.objectUtils.copyField(
+			this.inputObj, this.outputObj, this.destStr + '1', this.originStr + '2');
+		this.objectUtils.copyField(
+			this.inputObj, this.outputObj, this.originStr + '1', this.destStr + '2');
+	}
+	// Updates flex range based on number of segments in the request
+	this.updateFlexRange(segCount, this.getFlexRange(segCount));
+    // Since most requests will not contain the year we create and add it to the input obj
+    this.addYear();
+	// Sets the any time value in the output property depending on time in the request
+    var timeFlag = this.setTime();
+	// Determines if we should go to calendar or upsell display
+	//this.updateDisplayType(timeFlag);
+    this.outputObj[this.displayType] = "2"; // DX - DISPLAY_TYPE always is 2
+	// Set the default sort order. The sort order is impacted if a time was specified
+	this.updateArrangeBy(timeFlag);
+	// Update the date field in the output object with complete date string
+	// E.G. 201011130000
+    this.updateDateFields();
+	// Create the Amadeus pax type in the output object
+    this.updatePaxType();
+};
+/**
+ *	The dateNbrFormat is a helper method, which is used to add zero to single digit
+ *  day or month values
+ *  @param value - Accepts an day or month numeric value
+ *	@return - returns a 2 digit string representation of the day or month
+ */
+com.aa.i11l.amadeus.eRetail.m.dataFormat.prototype.dateNbrFormat = function (value) {
+    if (parseInt(value, 10) < 10) {
+        value = '0' + parseInt(value, 10);
+    }
+    return value;
+};
+/**
+ *	The createDateStr is a helper method, which is used to create the Amadeus specific
+ *  date string format from the individual year, month, day and time values.
+ *  Example format: 201011130000
+ *
+ *  @param year - Accepts a 4 digit string representing the year
+ *  @param month - Accepts a 2 digit string representing the month
+ *  @param day - Accepts a 2 digit string representing the day
+ *  @param year - Accepts a 4 digit string representing the time
+ *	@return - returns a 12 digit string representing the Amadeus specific date
+ */
+com.aa.i11l.amadeus.eRetail.m.dataFormat.prototype.createDateStr = function (year, month,
+	day, time) {
+    month = this.dateNbrFormat(month);
+    day = this.dateNbrFormat(day);
+	var dateStr = (year + month + day + time);
+	// If date string is less than 12 chars an empty day and month value was passed in
+	// in this case we set the date str to an empty string. This happens if optional
+	// empty date fields exist in a form. E.G. in a multi-city request.
+	if (dateStr.length !== 12) {
+		dateStr = '';
+	}
+	return dateStr;
+};
+/**
+ *	setTime is a helper method that updates the anyDepartureTime property in the
+ *  output object depending on if ANY time or a specific time was passed in the input
+ *  request. Amadeus requires a seperate boolean flag to tell e-retail whether to use
+ *  the time in the request or whether to ignore it
+ */
+com.aa.i11l.amadeus.eRetail.m.dataFormat.prototype.setTime = function () {
+	var timeSpecified = false;
+    var count = 1;
+    for (prop in this.inputObj) {
+        if (prop.match((this.depTimeStr + count)) !== null) {
+            if (this.inputObj[this.depTimeStr + count].toUpperCase() === 'ANY') {
+                this.inputObj[this.depTimeStr + count] = '0000';
+                this.outputObj[this.anyDepTimeStr + count] = 'TRUE';
+            }
+			else {
+                this.outputObj[this.anyDepTimeStr + count] = 'FALSE';
+				timeSpecified = true;
+            }
+            count++;
+        }
+    }
+	return timeSpecified;
+};
+/**
+ *	removeUseTime is a helper method that allows us to set the anyDepartureTime
+ *  properties to an empty string. This helper is used by the updateDateFields method
+ *
+ *  @param index - Accepts an integer, which is used to build the complete
+ *  anyDepartureTime string. This complete string is the key to the property that
+ *  should be set to an empty string.
+ */
+com.aa.i11l.amadeus.eRetail.m.dataFormat.prototype.removeUseTime = function (index) {
+    this.outputObj[this.anyDepTimeStr + index] = '';
+};
+
+/**
+ *	addYear is a helper method that creates the year based on the day and month passed in
+ *  the input object. It augments the input object with the relevant values
+ */
+com.aa.i11l.amadeus.eRetail.m.dataFormat.prototype.addYear = function () {
+    var count = 1;
+    var day = '';
+    var month = '';
+    var year = '';
+    for (prop in this.inputObj) {
+        if (prop.match(this.depDayStr) !== null) {
+            day = this.inputObj[this.depDateStr + count];
+            month = this.inputObj[this.depMonthStr + count];
+            year = this.dateUtils.getYear(day, month);
+            this.inputObj[this.depYearStr + count] = year;
+            count++;
+        }
+    }
+};
+/**
+ *	updateDateFields is a helper method that uses other helper methods to create
+ *  the Amadeus specific date format from the individual day, month, year and time
+ *  values in the input object and updates the date string properties in the output
+ *  object
+ */
+com.aa.i11l.amadeus.eRetail.m.dataFormat.prototype.updateDateFields = function () {
+    var count = 1;
+    for (prop in this.inputObj) {
+        if (prop.match(this.depDayStr) !== null) {
+			// Dynamically create day, month, year, time and date keys
+            var dayStr = (this.depDayStr + count);
+            var monthStr = (this.depMonthStr + count);
+            var yearStr = (this.depYearStr + count);
+            var timeStr = (this.depTimeStr + count);
+            var dateFieldStr = (this.depDateStr + count);
+            count++;
+            try {
+				// Only process if the date key exists in the output object
+                if (typeof this.outputObj[dateFieldStr] !== 'undefined') {
+					// Create the date string and update the date string property in
+					// the output object
+                    this.outputObj[dateFieldStr] = 	this.createDateStr(
+						this.objectUtils.returnFieldValue(this.inputObj, yearStr),
+						this.objectUtils.returnFieldValue(this.inputObj, monthStr),
+						this.objectUtils.returnFieldValue(this.inputObj, dayStr),
+						this.objectUtils.returnFieldValue(this.inputObj, timeStr));
+					// If date string returned is an empty string we remove the
+					// coresponding use time value from the specific
+					// anyDepartureTime property
+					if (this.outputObj[dateFieldStr] === '') {
+						this.removeUseTime(count-1);
+					}
+                }
+            }
+			catch (err) {
+                throw new Error('A fatal API exception occurred at com.aa.i11l.amadeus' +
+					'.eRetail.m.dataFormat.prototype.updateDateFields' +
+					' (Object read or write error occurred at runtime)');
+            }
+        }
+    }
+};
+/**
+ *	updatePaxType is a helper method that uses the passenger counts for each passenger
+ *  type in the input object to update the travellerType properties in the
+ *  output object. It also calls the hasInfant method to update the hasInfant
+ *  properties in the output object and associates them with the adult pax
+ */
+com.aa.i11l.amadeus.eRetail.m.dataFormat.prototype.updatePaxType = function () {
+    try {
+        var numAdt = parseInt(this.inputObj[this.numAdtStr], 10);
+        var numChd = parseInt(this.inputObj[this.numChdStr], 10);
+        var numInf = parseInt(this.inputObj[this.numInfStr], 10);
+        var numS65 = parseInt(this.inputObj[this.numS65Str], 10);
+        var numSrc = parseInt(this.inputObj[this.numSrcStr], 10);
+        var numYAd = parseInt(this.inputObj[this.numYAdStr], 10);
+        var numC04 = parseInt(this.inputObj[this.numC04Str], 10);
+        var numLap = parseInt(this.inputObj[this.numLapStr], 10);
+
+        var paxTypes = {};
+        if(!isNaN(numAdt)) paxTypes[this.adultValStr] = numAdt;
+        if(!isNaN(numSrc)) paxTypes[this.seniorValStr] = numSrc;
+        if(!isNaN(numS65)) paxTypes[this.senior65ValStr] = numS65;
+        if(!isNaN(numYAd)) paxTypes[this.youngAdultValStr] = numYAd;
+        if(!isNaN(numChd)) paxTypes[this.childValStr] = numChd;
+        if(!isNaN(numC04)) paxTypes[this.child04ValStr] = numC04;
+        if(!isNaN(numInf)) paxTypes[this.infantSeatValStr] = numInf;
+    }
+	catch (err) {
+        throw new Error('A fatal API exception occurred at com.aa.i11l.amadeus' +
+		    '.eRetail.m.dataFormat.prototype.updatePaxType' +
+			' (Object read error occurred at runtime)');
+    }
+    try {
+    	var total = 0;
+        for (var prop in paxTypes) {
+            this.objectUtils.updatePropRange(
+				this.outputObj,
+				total + 1,
+				(total + 1 + paxTypes[prop]),
+				this.tvlerTypeStr,
+				prop
+			);
+			total = total + paxTypes[prop];
+        }
+
+        var adultTravellers = 0;
+        if(!isNaN(numAdt)) adultTravellers += numAdt;
+        if(!isNaN(numSrc)) adultTravellers += numSrc;
+        if(!isNaN(numS65)) adultTravellers += numS65;
+
+        var infantTravellers = 0;
+        if(!isNaN(numLap)) infantTravellers += numLap;
+
+        this.hasInfant(adultTravellers, infantTravellers);
+    }
+	catch (err) {
+        throw new Error('A fatal API exception occurred at com.aa.i11l.amadeus' +
+			'.eRetail.m.dataFormat.prototype.updatePaxType' + ' (NaN error occurred)');
+    }
+};
+/**
+ *	hasInfant is a helper method that updates the hasInfant
+ *  properties in the output object and associates them with the adult pax
+ *
+ *  @param adult - Accepts an integer specifying the number of adult travellers
+ *  @param infant - Accepts an integer specifying the number of infant travellers
+ */
+com.aa.i11l.amadeus.eRetail.m.dataFormat.prototype.hasInfant = function (adult, infant) {
+    if ((!isNaN(adult) && !isNaN(infant)) && (adult >= infant)) {
+        this.objectUtils.updatePropRange(
+			this.outputObj, 1, (infant + 1), this.hasInfStr, this.hasInfValStr);
+    }
+	else {
+        throw new Error('A fatal API exception occurred at com.aa.i11l.amadeus' +
+			'.eRetail.m.dataFormat.prototype.hasInfant' +
+			' (NaN or out of bounds error occurred)');
+    }
+};
+
+/**
+ *	getSegmentCount is a helper method that counts the number of segments in the request
+ *
+ *  @return the number of segments as an integer
+ */
+com.aa.i11l.amadeus.eRetail.m.dataFormat.prototype.getSegmentCount = function () {
+	var segmentCount = 0;
+	var i = 1;
+	// Loop through the request object and count all origin properties that do
+	// not have an empty value
+	for (prop in this.inputObj) {
+		if (this.inputObj.hasOwnProperty('origin'+ i) &&
+			this.inputObj['origin'+ i].trim() !== '') {
+			segmentCount++;
+		}
+		i++;
+	}
+	return segmentCount;
+};
+
+/**
+ *	getFlexRange is a helper method that reads the appropriate flex range value
+ *  from the config based on the number of segments in the request
+ *
+ *  @param segCount - Accepts an integer specifying the number of segments
+ *  @return the appropriate flex range value as an integer
+ */
+com.aa.i11l.amadeus.eRetail.m.dataFormat.prototype.getFlexRange = function (segCount) {
+    // Get default range from app resources
+    var dateFlex = parseInt(application.context.getInitProperty('flexRangeDefault'),10);
+
+    if(this.inputObj.flowType && this.inputObj.flowType == "flexPricerMultiCity") {
+        if (application.context.getInitProperty('useFlexRangeOverride')) {
+            switch (segCount) {
+                case 1:
+                    dateFlex = application.context.getInitProperty('flexRangeOneSeg');
+                    break;
+                case 2:
+                    dateFlex = application.context.getInitProperty('flexRangeTwoSeg');
+                    break;
+                case 3:
+                    dateFlex = application.context.getInitProperty('flexRangeThreeSeg');
+                    break;
+                case 4:
+                    dateFlex = application.context.getInitProperty('flexRangeFourSeg');
+                    break;
+                case 5:
+                    dateFlex = application.context.getInitProperty('flexRangeFiveSeg');
+                    break;
+                case 6:
+                    dateFlex = application.context.getInitProperty('flexRangeSixSeg');
+                    break;
+            }
+        }
+    } else {
+        dateFlex = 2; /* DX change for non multicity flows */
+    // } else {
+    //     // If config specifies that the override should be used process flex range logic
+    // 	if (application.context.getInitProperty('useFlexRangeOverride')) {
+    // 		switch (segCount) {
+    //         	case 1:
+    // 				dateFlex = application.context.getInitProperty('flexRangeOneSeg');
+    // 				break;
+    // 			case 2:
+    //             	dateFlex = application.context.getInitProperty('flexRangeTwoSeg');
+    // 				break;
+    // 			case 3:
+    // 				dateFlex = application.context.getInitProperty('flexRangeThreeSeg');
+    // 				break;
+    // 			case 4:
+    // 				dateFlex = application.context.getInitProperty('flexRangeFourSeg');
+    // 				break;
+    // 			case 5:
+    // 				dateFlex = application.context.getInitProperty('flexRangeFiveSeg');
+    // 				break;
+    // 			case 6:
+    //             	dateFlex = application.context.getInitProperty('flexRangeSixSeg');
+    // 				break;
+    // 		}
+    // 	}
+    }
+	return dateFlex;
+};
+
+/**
+ *	updateFlexRange is a helper method that updates the flexRange property in the
+ *  specified target object
+ *
+ * @param segCount - Integer indicating the number of segments in the request
+ * @param range - Integer indicating the flex range value
+ */
+com.aa.i11l.amadeus.eRetail.m.dataFormat.prototype.updateFlexRange = function (
+	segCount, range) {
+	// Create a reference to the config section that we should update
+	var target = this.config[application.context.getInitProperty('flexTfdoTarget')];
+	// Create the native Amadeus parameter and augment the config object
+	for (var i = 0; i < segCount; i++) {
+		target[application.context.getInitProperty('flexNativeDateRangeParam')+(i+1)] =	range;
+		target[application.context.getInitProperty('flexNativeDisplayParam')+(i+1)] =
+			application.context.getInitProperty('flexNativeDisplayValue');
+	}
+};
+
+/**
+ *	updateDisplayType is a helper method that updates the displayType property,
+ *  which is used to specify if the upsell or calendar view should be targeted
+ *  in the e-retail flow.
+ *
+ *  @param timeFlag - Boolean, which specifies if a time was specified in the request
+ */
+// com.aa.i11l.amadeus.eRetail.m.dataFormat.prototype.updateDisplayType = function (timeFlag) {
+// 	// If request specified that exact dates should be used or if a time was specified
+// 	// we set the target to the upsell panel
+// 	if (this.inputObj[this.searchType] ===
+// 		application.context.getInitProperty('schedSearchFlag') || timeFlag) {
+// 		this.outputObj[this.displayType] =
+// 			application.context.getInitProperty('schedSearchDisplayMode');
+// 	}
+// 	else {
+// 		if(com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID &&
+//               (com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID == "CHINA"
+//             || com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID == "IRELAND" // Release 1
+//             || com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID == "BELGIUM" // Release 2
+//             || com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID == "DENMARK"
+//             || com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID == "FINLAND"
+//             || com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID == "GREECE"
+//             || com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID == "ISRAEL"
+//             || com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID == "NETHERLANDS"
+//             || com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID == "NORWAY"
+//             || com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID == "PORTUGAL"
+//             || com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID == "SWEDEN"
+//             || com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID == "SWITZERLAND"
+//             || com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID == "NEWZEALAND"
+//             || com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID == "GERMANY" // Release 3
+//             || com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID == "ITALY"
+//             || com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID == "SPAIN"
+//             || com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID == "AUSTRALIA"
+//             || com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID == "CHINA"
+//             || com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID == "HONGKONG"
+//             || com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID == "JAPAN"
+//             || com.aa.i11l.amadeus.eRetail.config.local.siteOverrides.EXTERNAL_ID == "KOREA"
+//         )) {
+// 			this.outputObj[this.displayType] = "2";
+// 		} else {
+// 		 	// Default is calendar/flexible dates display
+// 		 	this.outputObj[this.displayType] =
+// 		 		application.context.getInitProperty('flexSearchDisplayMode');
+// 		}
+// 	}
+// };
+
+/**
+ *	updateArrangeBy is a helper method that sets the sort order that should be used
+ *  on the upsell panel in e-retail
+ *
+ *  @param timeFlag - Boolean, which specifies if a time was specified in the request
+ */
+com.aa.i11l.amadeus.eRetail.m.dataFormat.prototype.updateArrangeBy = function (timeFlag) {
+	// If a time was specified we need to set the sort order by departure time
+	if (timeFlag) {
+		this.outputObj[this.arrangeBy] =
+			application.context.getInitProperty('timeSpecifiedSortOrder');
+	}
+	else if (this.inputObj[this.flowType] ===
+		application.context.getInitProperty('ftSignatureFPMC')) {
+	    // Set the default sort order appropriate to flexpricer multi-city
+		this.outputObj[this.arrangeBy] =
+			application.context.getInitProperty('MCFPDefaultSortOrder');
+	}
+	else if (this.inputObj[this.flowType] ===
+		application.context.getInitProperty('ftSignatureFP')) {
+	    // Set the default sort order appropriate to flexpricer
+		this.outputObj[this.arrangeBy] =
+			application.context.getInitProperty('FPDefaultSortOrder');
+	}
+};
+
+/**
+ *	The connector class is responsible for updating the output data structure
+ *  that represents the Amadeus trip flow request. It combines the formatted search
+ *  specific data with the config data that makes up the trip flow call
+ *
+ *	@param init - Accepts an object that contains the initialisation data
+ *  Object structure:
+ *
+ *  {
+ *      'orderedSearchObj': // Reference to ordered search object,
+ *      'cff': // Cff property name,
+ *      'cffPar': // Key where to look up the CFF property,
+ *      'searchedCff': // Key of cff property in the ordered search object ,
+ *      'locale': // Locale string value sent in the request,
+ *      'flow': // The flow E.G. flexPricer or flexPricerMultiCity,
+ *      'id': // Key to the id value in the oredered search object,
+ *      'output': // Refrence to the top level output object,
+ *      'settingPar': Key to the setting parameters section in the object,
+ *      'searchPar': Key to the search parameter section in the object,
+ *      'globalConfig': Reference to the global configuration data structure,
+ *      'localConfig': Reference to the local configuration data structure,
+ *      'par': // Array of keys for each configuration section in the config objects
+ *  }
+ *
+ */
+//Constructor
+com.aa.i11l.amadeus.eRetail.m.connector = function (init) {
+	// Create an object wide handle to the init parameters
+	this.init = init;
+	// Retrieve the flow type stored in the ordered search object
+    //this.flowType = this.init.orderedSearchObj[this.init.flow];
+	// Retrieve the ID stored in the ordered search object
+    this.formId = this.init.orderedSearchObj[this.init.id];
+	// Create a reference to the final output object
+    //this.searchDataObj = this.init.output[this.flowType];
+	this.searchDataObj = this.init.output[this.init.flow];
+	//alert(this.searchDataObj.toSource());
+	// Create instances to helper objects
+    this.toolkit = new com.aa.i11l.utils.toolkit.objectUtils();
+    this.locale = new com.aa.i11l.amadeus.eRetail.m.locale();
+	// Process the locale passed in the request
+    this.locale.processLocale(this.init.locale);
+	// Set the global and local config refrences
+    this.locale.setGlobalConfig(this.init.globalConfig);
+    this.locale.setLocalConfig(this.init.localConfig);
+	// Set the the object that will be written to from the config objects
+    this.locale.setDataOutputObj(this.searchDataObj);
+};
+/**
+ *	doPackage packages all the various components into the final output object
+ *
+ *  @return - The final data structure (object) that represents the trip flow request
+ */
+com.aa.i11l.amadeus.eRetail.m.connector.prototype.doPackage = function () {
+	// Update the ID field in the setting section with the passed in form name
+	// This will be used as the form name/ID in the generated form
+    this.searchDataObj[this.init.settingPar]['ID'] = this.formId;
+	// Retrieve the CFF value from the config
+    var cffValue = this.locale.doCffLookup(this.init.cffPar, this.init.cff, this.formId);
+	// Update the cff property value in the ordered search object
+    this.init.orderedSearchObj[this.init.searchedCff] = cffValue;
+	// Read the config objects and update each partition in the output object
+    for (i = 0; i < this.init.par.length; i++) {
+        this.locale.doConfigLookup(this.init.par[i], this.formId);
+    }
+	// Since we have processed the e-retail business rules we can now reset
+	// the local and global config refs to the lang resource bundle
+    this.locale.setGlobalConfig(com.aa.i11l.app.acg.resources.lang);
+    this.locale.setLocalConfig(com.aa.i11l.app.acg.resources.lang);
+	// Update the output object with the tripflow language
+    this.updateTripFlowLang();
+    // Update on hold option if is a booking with 6 or less days
+    this.updateOnHold();
+
+	// Get the correct language string for the processing message
+	// this will be used as the wait label when the form is being submitted
+	// to e-retail
+    var procMsg = this.locale.getLocaleString('messaging.PROCESSING_MSG');
+	// Update PROCESSING_MSG property in the output object with the language string
+    this.searchDataObj[this.init.settingPar]['PROCESSING_MSG'] = procMsg;
+	// Convert the ordered search object to a conventional array
+    var usrSearchArr = this.toolkit.hashTableToArray(this.init.orderedSearchObj);
+	// Update the output object property values with the values in the ordered search
+	// array
+    this.updateSearchData(usrSearchArr);
+    return this.searchDataObj;
+};
+/**
+ *	updateSearchData is a helper method that updates the values in the
+ *  search specific section of the output objects with the values in the
+ *  in the ordered search object.
+ *
+ *  @param arr - Accepts an array representing the ordered search objects
+ */
+com.aa.i11l.amadeus.eRetail.m.connector.prototype.updateSearchData = function (arr) {
+    var index = 0;
+    try {
+        for (prop in this.searchDataObj[this.init.searchPar]) {
+			// Write to the search specific section in the output object
+            this.searchDataObj[this.init.searchPar][prop] = arr[index];
+            index++;
+        }
+    }
+	catch (err) {
+        throw new Error('A fatal API exception occurred at com.aa.i11l.amadeus' +
+			'.eRetail.m.connector.prototype.updateSearchData' +
+			' (Object read or write error occurred at runtime)');
+    }
+};
+/**
+ *  If the booking is done with less than 6 days to departure the On Hold option is disabled
+ */
+com.aa.i11l.amadeus.eRetail.m.connector.prototype.updateOnHold = function () {
+    try {
+        var payLaterConfigValue = this.searchDataObj[application.context.getInitProperty('overridePartition')]
+                                                    [application.context.getInitProperty('onHoldNativeParam')];
+
+        // If is undefined or the cast to boolean is true. Exclude the false value in the loval config
+        if(typeof payLaterConfigValue == 'undefined' || (payLaterConfigValue.toLowerCase() === "true")) {
+            function checkOnHold(departureDateMills) {
+                var result = false;
+
+                jQuery.ajax({
+                    url : '/intl/ie/apps/IWCommon/onHold.jsp',
+                    data : { date: departureDateMills },
+                    async: false,
+                    cache: false,
+                    dataType: 'json',
+                    success : function(json) {
+                        result = json.result;
+                    }
+                });
+
+                return result;
+            }
+
+            var departureDateField = this.init.orderedSearchObj.departureDate1;
+
+            // parse the date string to a Date object
+    		var year = departureDateField.substr(0,4),
+        		month = departureDateField.substr(4,2) - 1,
+        		day = departureDateField.substr(6,2);
+
+    		var departureDate = new Date(year, month, day);
+
+            if(!checkOnHold(departureDate.getTime())) {
+                this.searchDataObj[application.context.getInitProperty('overridePartition')]
+                                  [application.context.getInitProperty('onHoldNativeParam')] = 'FALSE'
+            }
+        }
+    }
+    catch(err) {
+        throw new Error('A fatal API exception occurred at com.aa.i11l.amadeus' +
+            '.eRetail.m.connector.prototype.updateOnHold' +
+            ' (Object read or write error occurred at runtime)');
+    }
+}
+/**
+ *	updateTripFlowLang is a helper method that updates the trip flow language
+ *  in the trip flow data object (tfdo), which is the final output object.
+ *  The language is determined by the locale sent in the request.
+ */
+com.aa.i11l.amadeus.eRetail.m.connector.prototype.updateTripFlowLang = function () {
+	try {
+		// Checks config setting to see if the locale language should be used to specify
+		// the tripflow language.
+		if (application.context.getInitProperty('useLocaleLang')) {
+			// If language is 'en' use the default path
+			if (this.locale.language === 'en') {
+				var tfLang = com.aa.i11l.app.acg.resources.lang['tripFlowLanguage'];
+			}
+			else {
+				// Get the Amadeus equivalent language code for the ISO locale lang code
+				var tfLang = com.aa.i11l.app.acg.resources.lang[
+					this.locale.language]['tripFlowLanguage'];
+
+				// redirect zh_HK to traditional chinese
+				if(this.locale.country === 'HK' && this.locale.language === 'zh') {
+					tfLang = 'TW';
+				}
+			}
+			// Creates a reference to the relevant partition in the tfdo object
+			var target = this.searchDataObj[
+				application.context.getInitProperty('langTfdoTarget')];
+				// Create the LANGUAGE property and assign it the relevant trip flow language
+				target[application.context.getInitProperty('langNativeParam')] = tfLang;
+		}
+	}
+	catch(err) {
+		throw new Error('A fatal API exception occurred at com.aa.i11l.amadeus' +
+			'.eRetail.m.connector.prototype.updateTripFlowLang' +
+			' (Object read or write error occurred at runtime)');
+	}
+};
+/**
+ *	The locale class is responsible for reading from the config objects and writing
+ *  to the designated output object
+ */
+//Constructor
+com.aa.i11l.amadeus.eRetail.m.locale = function () {
+    this.dataOutputObj;
+};
+// Inherits from i18n locale
+com.aa.i11l.amadeus.eRetail.m.locale.prototype = new com.aa.i11l.utils.i18n.localeUtils;
+
+/**
+ *	Setter method. Sets the object that should be written to
+ *
+ *  @param obj - Accepts object
+ */
+com.aa.i11l.amadeus.eRetail.m.locale.prototype.setDataOutputObj = function (obj) {
+    this.dataOutputObj = obj;
+};
+/**
+ *	The doCffLookup method uses a cascade approach to look up the cff value
+ *  It will look in the custom form config first then if it doesnt find it there
+ *  it will look in the local config for that locale and finally if it doesnt find it
+ *  in the local config it will look in the global config. If no value is found an
+ *  exception is thrown. The cascade order is from most specific to least specific
+ *
+ *  @param partition - String that represents the partion key to be used for the lookup
+ *  @param cff - String that represents the key for the cff to be looked up
+ *  @param cff - String that represents the key for the custom config partition
+ */
+com.aa.i11l.amadeus.eRetail.m.locale.prototype.doCffLookup = function (
+	partition, cff, customConfigId) {
+    var cffValue = null;
+    try {
+		// Since form specific configs are optional we must wrap the look up
+		// in a try catch block this allows us to continue processing subsequent configs
+		// even if an exception is thrown
+		try {
+			/** check the global config first for form specific**/
+			cffValue = this.globalConfig[customConfigId][partition][cff];
+			// Look up the form specific part of the config
+			cffValue = this.localConfig[customConfigId][partition][cff];
+		}
+		catch(err) {}
+		// If not found look in the local config
+        if (typeof cffValue === 'undefined' || cffValue === null) {
+            if(this.localConfig[partition] && this.localConfig[partition][cff]) {
+                cffValue = this.localConfig[partition][cff];
+            }
+        }
+		// If not found look in the global config
+        if (typeof cffValue === 'undefined' || cffValue === null) {
+            if(this.globalConfig[partition] && this.globalConfig[partition][cff]) {
+                cffValue = this.globalConfig[partition][cff];
+            }
+        }
+        if (typeof cffValue === 'undefined' || cffValue === null) {
+            throw new Error('A fatal API exception occurred at com.aa.i11l.amadeus' +
+				'.eRetail.m.locale.prototype.doCffLookup' +
+				' (Unable to read config property)');
+        }
+    }
+	catch (err) {
+        throw new Error('A fatal API exception occurred at com.aa.i11l.amadeus' +
+			'.eRetail.m.locale.prototype.doCffLookup' +
+			' (Unable to read one or more config objects)');
+    }
+    return cffValue
+};
+/**
+ *	The doConfigLookup method uses a cascade approach to look up the specified config item
+ *  The cascade order is from least specific to most specific. Using this logic we can
+ *  build a fine grained hierarchy of overrides. For example in the global config we can
+ *  specify the default values we want to use. If we want to override specific values we
+ *  simply specify the same property in the local config. Since the local config is
+ *  processed after the global one the global value will be overwritten. The form specific
+ *  has the same affect on the local as the local has on the global.
+ *
+ *  @param confItem - String that represents the partion key to be used for the lookup
+ *  @param customConfId - String that represents the key for the custom config
+ */
+com.aa.i11l.amadeus.eRetail.m.locale.prototype.doConfigLookup = function (
+	confItem, customConfId) {
+    try {
+        // Reads the global config and updates the output object
+        this.readConfig(this.globalConfig[confItem], confItem);
+		// Reads the local config and updates the output object
+        this.readConfig(this.localConfig[confItem], confItem);
+    }
+	catch (err) {
+	/** remove this Error, so we can skip portions in the config, same as below for the form specific **/
+/*        throw new Error('A fatal API exception occurred at com.aa.i11l.amadeus' +
+			'.eRetail.m.locale.prototype.doConfigLookup' +
+			' (Unable to read one or more config objects)');*/
+    }
+    try {
+		/** also possible to add form specific section to global config **/
+        this.readConfig(this.globalConfig[customConfId][confItem], confItem);
+		// Reads the form specific config and updates the output object
+        this.readConfig(this.localConfig[customConfId][confItem], confItem);
+    }
+	catch (err) {}
+};
+/**
+ *	readConfig is a helper method that reads from the specified config object
+ *  and writes to the object that was set as the output object
+ *
+ *  @param configObj - Accepts an object that will be used to read from
+ *  @param confItem - Accepts a string that will be used as the key for the write to
+ */
+com.aa.i11l.amadeus.eRetail.m.locale.prototype.readConfig = function (
+	configObj, confItem) {
+    if (typeof configObj !== 'undefined' && typeof this.dataOutputObj !== 'undefined') {
+        for (prop in configObj) {
+            this.dataOutputObj[confItem][prop] = configObj[prop];
+        }
+    }
+	else {
+        throw new Error('A fatal API exception occurred at com.aa.i11l.amadeus' +
+			'.eRetail.m.locale.prototype.readConfig' +
+			' (config read error)');
+    }
+};
+// Local namespaces
+Namespace.Manager.Register("com.aa.i11l.app");
+Namespace.Manager.Register("com.aa.i11l.app.acg.resources");
+Namespace.Manager.Register("com.aa.i11l.app.acg.resources.osdo");
+Namespace.Manager.Register("com.aa.i11l.app.acg.resources.tfdo");
+Namespace.Manager.Register("com.aa.i11l.app.acg.resources.filter");
+
+// Config namespace
+Namespace.Manager.Register("com.aa.i11l.amadeus.eRetail.config");
+
+/**
+ *	com.aa.i11l.app.acg.resources.lang holds the locale specific language strings
+ *  used in the transition page between our search form and Amadeus e-retail
+ */
+com.aa.i11l.app.acg.resources.lang = {
+    "error": {
+        "ERROR_HEADER": "The following error(s) occured",
+        "INVALID_DEP_CITY": "Please provide us with a departure city and try again.",
+        "INVALID_RET_CITY": "Please provide us with a return city and try again.",
+        "DEP_FLT_OUT_OF_RANGE": "We can only display departing flights up to 331 days from today.",
+        "RET_FLT_OUT_OF_RANGE": "We can only display flights returning within the next 331 days.",
+        "RET_TIME_BEFORE_DEP_TIME": "Your return time cannot be on or before your departure time.",
+        "SAME_DAY_FLT_NO_TIME_SPECIFIED": "For same-date return flights, please specify your flight times.",
+        "PAX_COUNT_EXCEEDS_MAX": "The maximum total number of passengers you can book online is 7.",
+		"INVALID_DEP_DATE": "Please enter a valid departure date.",
+		"INVALID_RET_DATE": "Please enter a valid return date."
+    },
+    "messaging": {
+        "PROCESSING_MSG": "We are processing your request, please wait ..."
+    },
+	"tripFlowLanguage": "GB",
+    "pt": {
+        "error": {
+            "ERROR_HEADER": "O seguinte erro ocorreu",
+            "INVALID_DEP_CITY": "Informe a cidade de origem e tente novamente.",
+            "INVALID_RET_CITY": "Informe a cidade de retorno e tente novamente.",
+            "DEP_FLT_OUT_OF_RANGE": "S\u00f3 podemos mostrar v\u00f4os com partida em at\u00e9 331 dias, a contar de hoje.",
+            "RET_FLT_OUT_OF_RANGE": "S\u00f3 podemos mostrar v\u00f4os de retorno nos pr\u00f3ximos 331 dias.",
+            "RET_TIME_BEFORE_DEP_TIME": "Sua hora de retorno n\u00e3o pode ser a mesma ou antes da hora de partida.",
+            "SAME_DAY_FLT_NO_TIME_SPECIFIED": "Para v\u00f4os de volta na mesma data, especifique o hor\u00e1rio de seu v\u00f4o.",
+            "PAX_COUNT_EXCEEDS_MAX": "O n\u00famero m\u00e1ximo de reservas de passageiros online \u00e9 sete."
+        },
+        "messaging": {
+            "PROCESSING_MSG": "Estamos processando seu pedido, por favor aguarde..."
+        },
+		"tripFlowLanguage": "PO"
+    },
+    "ca": {
+        "error": {
+            "ERROR_HEADER": "S'han produ&#239;t els errors seg&#252;ents:",
+            "INVALID_DEP_CITY": "Introdu&#239;u una ciutat d'origen i torneu a intentar-ho.",
+            "INVALID_RET_CITY": "Introdu&#239;u una ciutat de destinaci&#243; i torneu a intentar-ho.",
+            "DEP_FLT_OUT_OF_RANGE": "Nom&#233;s podeu reservar vols que surtin en un termini m&#224;xim de 331 dies a partir d'avui.",
+            "RET_FLT_OUT_OF_RANGE": "Nom#233;s podeu reservar vols que tornin en un termini m&#224;xim de 331 dies a partir d'avui.",
+            "RET_TIME_BEFORE_DEP_TIME": "L'hora de tornada ha de ser posterior a la de sortida.",
+            "SAME_DAY_FLT_NO_TIME_SPECIFIED": "Si el vol d'anada i el de tornada s&#243;n el mateix dia, especifiqueu les hores dels vols.",
+            "PAX_COUNT_EXCEEDS_MAX": "A la nostra web nom&#233;s podeu reservar 7 passatgers com a m&#224;xim."
+        },
+        "messaging": {
+            "PROCESSING_MSG": "Espereu un moment..."
+        },
+		"tripFlowLanguage": "CA"
+    },
+    "zh": {
+        "error": {
+            "ERROR_HEADER": "&#20986;&#29616;&#20197;&#19979;&#38169;&#35823;",
+            "INVALID_DEP_CITY": "&#35831;&#25552;&#20379;&#31163;&#22659;&#22478;&#24066;&#65292;&#28982;&#21518;&#20877;&#35797;&#12290;",
+            "INVALID_RET_CITY": "&#35831;&#25552;&#20379;&#22238;&#31243;&#22478;&#24066;&#65292;&#28982;&#21518;&#20877;&#35797;&#12290;",
+            "DEP_FLT_OUT_OF_RANGE": "&#25105;&#20204;&#21482;&#33021;&#26174;&#31034;&#20174;&#20170;&#22825;&#36215;&#33267;331&#22825;&#30340;&#31163;&#22659;&#33322;&#29677;&#12290;",
+            "RET_FLT_OUT_OF_RANGE": "&#25105;&#20204;&#21482;&#33021;&#26174;&#31034;&#26368;&#36817;331&#22825;&#30340;&#22238;&#31243;&#33322;&#29677;&#12290;",
+            "RET_TIME_BEFORE_DEP_TIME": "&#20320;&#30340;&#22238;&#31243;&#26102;&#38388;&#19981;&#33021;&#26089;&#20110;&#31163;&#22659;&#26102;&#38388;&#12290;",
+            "SAME_DAY_FLT_NO_TIME_SPECIFIED": "&#21363;&#26085;&#26469;&#22238;&#33322;&#29677;&#65292;&#35831;&#27880;&#26126;&#33322;&#29677;&#26102;&#21051;&#12290;",
+            "PAX_COUNT_EXCEEDS_MAX": "&#26368;&#22810;&#21482;&#33021;&#21516;&#26102;&#35746;&#36141;7&#20301;&#20056;&#23458;&#30340;&#26426;&#31080;&#12290;"
+        },
+        "messaging": {
+            "PROCESSING_MSG": "&#25105;&#20204;&#27491;&#22312;&#22788;&#29702;&#24744;&#30340;&#30003;&#35831;&#65292;&#35831;&#31245;&#20505;..."
+        },
+		"tripFlowLanguage": "CN"
+    },
+    "de": {
+        "error": {
+            "ERROR_HEADER": "Folgende Fehler sind aufgetreten",
+            "INVALID_DEP_CITY": "Geben Sie bitte einen Abreiseort ein, und versuchen Sie es erneut.",
+            "INVALID_RET_CITY": "Geben Sie bitte einen Ankunftsort ein, und versuchen Sie es erneut.",
+            "DEP_FLT_OUT_OF_RANGE": "Bitte nur Fl&#252;ge angeben die sp&#228;testens 331 Tage ab heute abfliegen.",
+            "RET_FLT_OUT_OF_RANGE": "Bitte nur Fl&#252;ge angeben die sp&#228;testens 331 Tage ab heute zur&#252;ckfliegen.",
+            "RET_TIME_BEFORE_DEP_TIME": "Die R&#252;ckflugzeit muss nach der Abflugzeit stattfinden.",
+            "SAME_DAY_FLT_NO_TIME_SPECIFIED": "Bei R&#252;ckflug am selben Tag, bitte gew&#252;nschten Abflugzeiten angeben.",
+            "PAX_COUNT_EXCEEDS_MAX": "Es k&#246;nnen nicht mehr als 7 Personen online gebucht werden.",
+            "IGNORE": "NO ERROR"
+        },
+        "messaging": {
+            "PROCESSING_MSG": "Ihre Anfrage wird bearbeitet, bitte warten..."
+        },
+		"tripFlowLanguage": "DE"
+    },
+    "es": {
+        "error": {
+            "ERROR_HEADER": "Ha ocurrido el error siguiente",
+            "INVALID_DEP_CITY": "Por favor introduzca una ciudad de origen e int&#233;ntelo otra vez.",
+            "INVALID_RET_CITY": "Por favor introduzca una ciudad de destino e int&#233;ntelo otra vez",
+            "DEP_FLT_OUT_OF_RANGE": "S&#243;lo mostramos vuelos con salida en un plazo de 331 d&#237;as desde hoy.",
+            "RET_FLT_OUT_OF_RANGE": "S&#243;lo mostramos vuelos de regreso en un plazo de 331 d&#237;as desde hoy.",
+            "RET_TIME_BEFORE_DEP_TIME": "Su regreso no puede ser igual o anterior a su salida.",
+            "SAME_DAY_FLT_NO_TIME_SPECIFIED": "Indique el horario de sus vuelos en reservas de ida/vuelta en el d&#237;a.",
+            "PAX_COUNT_EXCEEDS_MAX": "El n&#250;mero m&#225;ximo de pasajeros que puede reservar online es 7."
+        },
+        "messaging": {
+            "PROCESSING_MSG": "Estamos procesando su solicitud. Espere, por favor..."
+        },
+		"tripFlowLanguage": "ES"
+    },
+    "fr": {
+        "error": {
+            "ERROR_HEADER": "Les erreurs suivantes se sont produites",
+            "INVALID_DEP_CITY": "Veuillez pr&#233;ciser votre ville de d&#233;part et r&#233;-essayez.",
+            "INVALID_RET_CITY": "Veuillez pr&#233;ciser votre ville de d&#233;part et r&#233;-essayez.",
+            "DEP_FLT_OUT_OF_RANGE": "R&#233;servation possible qu'&#224; partir de 331 jours en avance.",
+            "RET_FLT_OUT_OF_RANGE": "R&#233;servation du retour possible qu'&#224; partir de 331 jours en avance.",
+            "RET_TIME_BEFORE_DEP_TIME": "La date de l'aller ne doit pas &#234;tre post&#233;rieure &#224; celle du retour.",
+            "SAME_DAY_FLT_NO_TIME_SPECIFIED": "Pour un aller-retour le m&#234;me jour, veuillez pr&#233;ciser vos horaires de vol.",
+            "PAX_COUNT_EXCEEDS_MAX": "Vous ne pouvez r&#233;server que 7 personnes au maximum."
+        },
+        "messaging": {
+            "PROCESSING_MSG": "Traitement en cours, veuillez patienter..."
+        },
+		"tripFlowLanguage": "FR"
+    },
+    "it": {
+        "error": {
+            "ERROR_HEADER": "Si &#138; verificato il seguente errore(i)",
+            "INVALID_DEP_CITY": "Inserire la citta' di partenza e provare di nuovo.",
+            "INVALID_RET_CITY": "Inserire la citta' di arrivo e provare di nuovo.",
+            "DEP_FLT_OUT_OF_RANGE": "Sono visualizzabili solo voli con partenza nei prossimi 331 giorni.",
+            "RET_FLT_OUT_OF_RANGE": "E' possible visualizzare solo i voli di rientro nei prossimi 331 giorni.",
+            "RET_TIME_BEFORE_DEP_TIME": "Il volo di ritorno non puo' essere prima del volo di andata",
+            "SAME_DAY_FLT_NO_TIME_SPECIFIED": "Andata e ritorno nello stesso giorno. Indicare l'ora del ritorno.",
+            "PAX_COUNT_EXCEEDS_MAX": "E' possible prenotare solo un massimo di 7 passeggeri online."
+        },
+		"messaging": {
+            "PROCESSING_MSG": "Richiesta in fase di elaborazione, attendere prego..."
+        },
+		"tripFlowLanguage": "IT"
+    },
+	"ja": {
+        "error": {
+            "ERROR_HEADER": "&#27425;&#12398;&#12456;&#12521;&#12540;&#12364;&#30330;&#29983;&#12375;&#12414;&#12375;&#12383;",
+            "INVALID_DEP_CITY": "&#20986;&#30330;&#37117;&#24066;&#12434;&#20837;&#21147;&#12375;&#12390;&#20877;&#24230;&#26908;&#32034;&#12375;&#12390;&#12367;&#12384;&#12373;&#12356;&#12290;",
+            "INVALID_RET_CITY": "&#21040;&#30528;&#37117;&#24066;&#12434;&#20837;&#21147;&#12375;&#12390;&#20877;&#24230;&#26908;&#32034;&#12375;&#12390;&#12367;&#12384;&#12373;&#12356;&#12290;",
+            "DEP_FLT_OUT_OF_RANGE": "&#24489;&#36335;&#20415;&#12398;&#26085;&#26178;&#12364;&#24448;&#36335;&#20415;&#12392;&#21516;&#12376;&#12363;&#12381;&#12428;&#20197;&#21069;&#12395;&#12394;&#12387;&#12390;&#12356;&#12414;&#12377;&#12290;",
+            "RET_FLT_OUT_OF_RANGE": "&#21516;&#26085;&#20013;&#12395;&#24448;&#24489;&#12373;&#12428;&#12427;&#22580;&#21512;&#12399;&#12289;&#26178;&#21051;&#12434;&#25351;&#23450;&#12375;&#12390;&#12367;&#12384;&#12373;&#12356;&#12290;",
+            "RET_TIME_BEFORE_DEP_TIME": "&#24489;&#36335;&#20415;&#12398;&#26085;&#26178;&#12364;&#24448;&#36335;&#20415;&#12392;&#21516;&#12376;&#12363;&#12381;&#12428;&#20197;&#21069;&#12395;&#12394;&#12387;&#12390;&#12356;&#12414;&#12377;&#12290;",
+            "SAME_DAY_FLT_NO_TIME_SPECIFIED": "&#21516;&#26085;&#20013;&#12395;&#24448;&#24489;&#12373;&#12428;&#12427;&#22580;&#21512;&#12399;&#12289;&#26178;&#21051;&#12434;&#25351;&#23450;&#12375;&#12390;&#12367;&#12384;&#12373;&#12356;&#12290;",
+            "PAX_COUNT_EXCEEDS_MAX": "&#26368;&#22823;7&#21517;&#12414;&#12391;&#12398;&#20104;&#32004;&#12364;&#21487;&#33021;&#12391;&#12377;&#12290;"
+        },
+		"messaging": {
+            "PROCESSING_MSG": "&#12522;&#12463;&#12456;&#12473;&#12488;&#12398;&#20966;&#29702;&#20013;&#12391;&#12377;&#12290;&#23569;&#12375;&#12362;&#24453;&#12385;&#12367;&#12384;&#12373;&#12356;..."
+        },
+		"tripFlowLanguage": "JP"
+    },
+	"ko": {
+        "error": {
+            "ERROR_HEADER": "&#45796;&#51020;&#51032; &#50724;&#47448;&#44032; &#48156;&#49373;&#54616;&#50688;&#49845;&#45768;&#45796;.",
+            "INVALID_DEP_CITY": "&#52636;&#48156;&#46020;&#49884;&#47484; &#49440;&#53469;&#54616;&#50668; &#51452;&#49901;&#49884;&#50724;.",
+            "INVALID_RET_CITY": "&#54788;&#51648;&#52636;&#48156;&#46020;&#49884;&#47484; &#49440;&#53469;&#54616;&#50668; &#51452;&#49901;&#49884;&#50724;.",
+            "DEP_FLT_OUT_OF_RANGE": "&#52636;&#48156;&#54200;&#51008; &#44552;&#51068;&#47196;&#48512;&#53552; 331&#51068; &#51060;&#45236; &#54200;&#44620;&#51648;&#47564; &#51312;&#54924;&#44032; &#44032;&#45733;&#54633;&#45768;&#45796;.",
+            "RET_FLT_OUT_OF_RANGE": "&#44480;&#44397;&#54200;&#51008; 331&#51068; &#51060;&#45236; &#54200;&#44620;&#51648;&#47564; &#51396;&#54924;&#44032; &#44032;&#45733;&#54633;&#45768;&#45796;.",
+            "RET_TIME_BEFORE_DEP_TIME": "&#44480;&#44397;&#54200;&#51008; &#48152;&#46300;&#49884; &#52636;&#48156;&#54200; &#45216;&#51676; &#51060;&#54980;&#44032; &#46104;&#50612;&#50556; &#54633;&#45768;&#45796;.",
+            "SAME_DAY_FLT_NO_TIME_SPECIFIED": "&#44057;&#51008; &#45216;&#51676;&#51032; &#44480;&#44397;&#54200;&#50640; &#45824;&#54644;&#49436;&#45716; &#49464;&#48512; &#54637;&#44277;&#54200; &#49884;&#44036;&#51012; &#51648;&#51221;&#54644; &#51452;&#49901;&#49884;&#50724;.",
+            "PAX_COUNT_EXCEEDS_MAX": "&#50728;&#46972;&#51064; &#50696;&#50557;&#51060; &#44032;&#45733;&#54620; &#52572;&#45824; &#51064;&#50896;&#51008; 7&#47749;&#51077;&#45768;&#45796;.",
+            "PRIVACY_NOT_CHECKED": "&#50500;&#47700;&#47532;&#52856; &#54637;&#44277;&#51032; &#44060;&#51064;&#51221;&#48372;&#48372;&#54840;&#51221;&#52293;&#44284; &#49324;&#51060;&#53944; &#51060;&#50857;&#50557;&#44288;&#51012; &#48152;&#46300;&#49884; &#54869;&#51064;&#54616;&#49884;&#44256;,&#46041;&#51032;&#54616;&#49884;&#45716; &#44221;&#50864; &#52404;&#53356;&#48149;&#49828;&#47484; &#53364;&#47533;&#54644; &#51452;&#49884;&#44592; &#48148;&#46989;&#45768;&#45796;."
+        },
+        "messaging": {
+            "PROCESSING_MSG": "&#50836;&#52397;&#51012; &#52376;&#47532;&#54616;&#45716; &#51473;&#51077;&#45768;&#45796;. &#44592;&#45796;&#47140; &#51452;&#49901;&#49884;&#50724;..."
+        },
+		"tripFlowLanguage": "KO"
+    },
+    "nl": {
+        "error": {
+            "ERROR_HEADER": "De volgende fout(en) heeft (hebben) zich voorgedaan",
+            "INVALID_DEP_CITY": "Geef een vertrekstad op en probeer het opnieuw.",
+            "INVALID_RET_CITY": "Geef een retourstad op en probeer het opnieuw.",
+            "DEP_FLT_OUT_OF_RANGE": "Wij kunnen enkel vluchten tonen voor de volgende 331 dagen.",
+            "RET_FLT_OUT_OF_RANGE": "Wij kunnen enkel retourvluchten tonen voor de volgende 331 dagen.",
+            "RET_TIME_BEFORE_DEP_TIME": "Uw kunt niet terugkeren v&#243;&#243;r of op het tijdstip van uw vertrek.",
+            "SAME_DAY_FLT_NO_TIME_SPECIFIED": "Gelieve voor retourvluchten op dezelfde datum uw vluchttijden op te geven",
+            "PAX_COUNT_EXCEEDS_MAX": "U kunt online maximaal 7 passagiers tegelijk boeken."
+        },
+        "messaging": {
+            "PROCESSING_MSG": "Even geduld ..."
+        },
+		"tripFlowLanguage": "NL"
+    },
+    "ru": {
+        "error": {
+            "ERROR_HEADER": "&#1055;&#1088;&#1086;&#1080;&#1079;&#1086;&#1096;&#1083;&#1080; &#1089;&#1083;&#1077;&#1076;&#1091;&#1102;&#1097;&#1080;&#1077; &#1086;&#1096;&#1080;&#1073;&#1082;&#1080;",
+            "INVALID_DEP_CITY": "&#1059;&#1082;&#1072;&#1078;&#1080;&#1090;&#1077; &#1075;&#1086;&#1088;&#1086;&#1076; &#1086;&#1090;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1080;&#1103; &#1080; &#1087;&#1086;&#1074;&#1090;&#1086;&#1088;&#1080;&#1090;&#1077; &#1087;&#1086;&#1087;&#1099;&#1090;&#1082;&#1091;.",
+            "INVALID_RET_CITY": "&#1059;&#1082;&#1072;&#1078;&#1080;&#1090;&#1077; &#1075;&#1086;&#1088;&#1086;&#1076; &#1074;&#1086;&#1079;&#1074;&#1088;&#1072;&#1097;&#1077;&#1085;&#1080;&#1103; &#1080; &#1087;&#1086;&#1074;&#1090;&#1086;&#1088;&#1080;&#1090;&#1077; &#1087;&#1086;&#1087;&#1099;&#1090;&#1082;&#1091;.",
+            "DEP_FLT_OUT_OF_RANGE": "&#1054;&#1090;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1080;&#1077; &#1088;&#1077;&#1081;&#1089;&#1086;&#1074; &#1084;&#1086;&#1078;&#1077;&#1090; &#1073;&#1099;&#1090;&#1100; &#1086;&#1090;&#1086;&#1073;&#1088;&#1072;&#1078;&#1077;&#1085;&#1086; &#1090;&#1086;&#1083;&#1100;&#1082;&#1086; &#1079;&#1072; &#1087;&#1077;&#1088;&#1080;&#1086;&#1076; &#1076;&#1086; 331 &#1076;&#1085;&#1103; &#1089; &#1089;&#1077;&#1075;&#1086;&#1076;&#1085;&#1103;&#1096;&#1085;&#1077;&#1081; &#1076;&#1072;&#1090;&#1099;",
+            "RET_FLT_OUT_OF_RANGE": "&#1054;&#1073;&#1088;&#1072;&#1090;&#1085;&#1099;&#1077; &#1088;&#1077;&#1081;&#1089;&#1099; &#1084;&#1086;&#1075;&#1091;&#1090; &#1073;&#1099;&#1090;&#1100; &#1086;&#1090;&#1086;&#1073;&#1088;&#1072;&#1078;&#1077;&#1085;&#1099; &#1090;&#1086;&#1083;&#1100;&#1082;&#1086; &#1079;&#1072; &#1089;&#1083;&#1077;&#1076;&#1091;&#1102;&#1097;&#1080;&#1077; 331 &#1076;&#1077;&#1085;&#1100;.",
+            "RET_TIME_BEFORE_DEP_TIME": "&#1042;&#1088;&#1077;&#1084;&#1103; &#1074;&#1086;&#1079;&#1074;&#1088;&#1072;&#1097;&#1077;&#1085;&#1080;&#1103; &#1085;&#1077; &#1084;&#1086;&#1078;&#1077;&#1090; &#1089;&#1086;&#1074;&#1087;&#1072;&#1076;&#1072;&#1090;&#1100; &#1080;&#1083;&#1080; &#1087;&#1088;&#1077;&#1076;&#1096;&#1077;&#1089;&#1090;&#1074;&#1086;&#1074;&#1072;&#1090;&#1100; &#1074;&#1088;&#1077;&#1084;&#1077;&#1085;&#1080; &#1086;&#1090;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1080;&#1103;.",
+            "SAME_DAY_FLT_NO_TIME_SPECIFIED": "&#1044;&#1083;&#1103; &#1088;&#1077;&#1081;&#1089;&#1086;&#1074; &#1074; &#1086;&#1073;&#1072; &#1082;&#1086;&#1085;&#1094;&#1072; &#1074; &#1086;&#1076;&#1080;&#1085; &#1076;&#1077;&#1085;&#1100; &#1091;&#1082;&#1072;&#1078;&#1080;&#1090;&#1077; &#1074;&#1088;&#1077;&#1084;&#1103; &#1074;&#1099;&#1083;&#1077;&#1090;&#1072; &#1080; &#1074;&#1086;&#1079;&#1074;&#1088;&#1072;&#1097;&#1077;&#1085;&#1080;&#1103;.",
+            "PAX_COUNT_EXCEEDS_MAX": "&#1050;&#1086;&#1083;&#1080;&#1095;&#1077;&#1089;&#1090;&#1074;&#1086; &#1087;&#1072;&#1089;&#1089;&#1072;&#1078;&#1080;&#1088;&#1086;&#1074; &#1074; &#1086;&#1076;&#1085;&#1086;&#1084; &#1079;&#1072;&#1082;&#1072;&#1079;&#1077; &#1085;&#1077; &#1084;&#1086;&#1078;&#1077;&#1090; &#1087;&#1088;&#1077;&#1074;&#1099;&#1096;&#1072;&#1090;&#1100; 7."
+        },
+        "messaging": {
+            "PROCESSING_MSG": "&#1042;&#1072;&#1096; &#1079;&#1072;&#1087;&#1088;&#1086;&#1089; &#1086;&#1073;&#1088;&#1072;&#1073;&#1072;&#1090;&#1099;&#1074;&#1072;&#1077;&#1090;&#1089;&#1103;. &#1055;&#1086;&#1076;&#1086;&#1078;&#1076;&#1080;&#1090;&#1077;..."
+        },
+		"tripFlowLanguage": "RU"
+    },
+	'hu': {
+	    "error": {
+			"ERROR_HEADER": "The following error(s) occured",
+			"INVALID_DEP_CITY": "Please provide us with a departure city and try again.",
+			"INVALID_RET_CITY": "Please provide us with a return city and try again.",
+			"DEP_FLT_OUT_OF_RANGE": "We can only display departing flights up to 331 days from today.",
+			"RET_FLT_OUT_OF_RANGE": "We can only display flights returning within the next 331 days.",
+			"RET_TIME_BEFORE_DEP_TIME": "Your return time cannot be on or before your departure time.",
+			"SAME_DAY_FLT_NO_TIME_SPECIFIED": "For same-date return flights, please specify your flight times.",
+			"PAX_COUNT_EXCEEDS_MAX": "The maximum total number of passengers you can book online is 7.",
+			"INVALID_DEP_DATE": "Please enter a valid departure date.",
+			"INVALID_RET_DATE": "Please enter a valid return date."
+		},
+		"messaging": {
+            "PROCESSING_MSG": "K&#233;r&#233;se feldolgoz&#225;s alatt van, k&#233;rj&#252;k, v&#225;rjon..."
+		},
+		"tripFlowLanguage": "HU"
+	},
+	'fi': {
+	    "error": {
+			"ERROR_HEADER": "The following error(s) occured",
+			"INVALID_DEP_CITY": "Please provide us with a departure city and try again.",
+			"INVALID_RET_CITY": "Please provide us with a return city and try again.",
+			"DEP_FLT_OUT_OF_RANGE": "We can only display departing flights up to 331 days from today.",
+			"RET_FLT_OUT_OF_RANGE": "We can only display flights returning within the next 331 days.",
+			"RET_TIME_BEFORE_DEP_TIME": "Your return time cannot be on or before your departure time.",
+			"SAME_DAY_FLT_NO_TIME_SPECIFIED": "For same-date return flights, please specify your flight times.",
+			"PAX_COUNT_EXCEEDS_MAX": "The maximum total number of passengers you can book online is 7.",
+			"INVALID_DEP_DATE": "Please enter a valid departure date.",
+			"INVALID_RET_DATE": "Please enter a valid return date."
+		},
+		"messaging": {
+            "PROCESSING_MSG": "K&#228;sittelemme pyynt&#246;&#228;si. Ole hyv&#228; ja odota..."
+		},
+		"tripFlowLanguage": "FI"
+	}
+};
+
+/**
+ *	com.aa.i11l.app.acg.resources.ui contains resources used by ui utils classes
+ */
+com.aa.i11l.app.acg.resources.ui = {
+    html: {
+        splashHeader: '<div style="border: 1px solid #EEF2FB; margin-left: 26%;' + 'margin-right: 26%; margin-top: 20%; margin-bottom: 20%; width: 454px;' + ' height: 100px;"><div style="height: 23px;"></div>' + '<div style="float: left; padding-top: 5px; background-color: #EEF2FB;' + 'width: 30px; height: 25px;"></div>' + '<div style="float: left; padding-top: 5px; border-right: 2px solid #EEF2FB;' + 'background-color: #EEF2FB; width: 422px; height: 25px; color: #666666;' + 'font: bold 8pt arial, verdana, helvetica;">',
+        splashFooter: '</div><div height="1" style="clear:both;' + 'background-color: #EEF2FB; line-height: 1px;"></div>' + '<div style="float: left; background-color: #EEF2FB; width: 30px;' + 'height: 25px;"></div><div style="float: left; border-right: 2px solid #EEF2FB;' + 'background-color: #EEF2FB; width: 422px; height: 25px;">' + '<img src="/content/images/be/modules/common/progress.gif" width="322"' + 'height="13" border="0"></div>' + '<div style="clear:both; background-color: #FFFFFF; height: 22px;"></div></div>'
+    }
+};
+
+/**
+ *	com.aa.i11l.app.acg.resources.errors provides place holders to store error messages
+ *  and flags for the mapping validation logic
+ */
+com.aa.i11l.app.acg.resources.errors = {
+    "errorHeader": "",
+    "apiError": [],
+    "valueError": [],
+    "errorFlag": []
+};
+
+/**
+ *	com.aa.i11l.app.acg.resources.osdo.flexPricerAllFlows is used to order the raw user
+ *  search request. The application logic basically maps the unordered search object
+ *  values to their equivalent properties in this ordered structure. This structure is
+ *  then used to transfer the search values to the search section of the
+ *  tripflow data object in the same order.
+ */
+com.aa.i11l.app.acg.resources.osdo.flexPricerAllFlows = {
+    "origin1": "",
+    "destination1": "",
+    "origin2": "",
+    "destination2": "",
+    "origin3": "",
+    "destination3": "",
+    "origin4": "",
+    "destination4": "",
+    "origin5": "",
+    "destination5": "",
+    "origin6": "",
+    "destination6": "",
+    "departureDate1": "",
+    "anyDepartureTime1": "",
+    "departureDate2": "",
+    "anyDepartureTime2": "",
+    "departureDate3": "",
+    "anyDepartureTime3": "",
+    "departureDate4": "",
+    "anyDepartureTime4": "",
+    "departureDate5": "",
+    "anyDepartureTime5": "",
+    "departureDate6": "",
+    "anyDepartureTime6": "",
+    "tripType": "",
+    "commercialFareFamily": "",
+    "travellerType1": "",
+    "travellerType2": "",
+    "travellerType3": "",
+    "travellerType4": "",
+    "travellerType5": "",
+    "travellerType6": "",
+    "travellerType7": "",
+    "hasInfant1": "",
+    "hasInfant2": "",
+    "hasInfant3": "",
+    "hasInfant4": "",
+    "hasInfant5": "",
+    "hasInfant6": "",
+    "hasInfant7": "",
+    "displayType": "",
+    "arrangeBy": "",
+    "id": "",
+    "flowType": ""
+};
+
+/**
+ *	The trip flow data object (tfdo) is the data structure that
+ *  represents the complete Amadeus trip flow request.
+ *  This is the object that the application updates with a
+ *  combination of the formatted search data and the data from
+ *  the config structures. This is the object that the UI classes
+ *  read from to create the trip flow form
+ */
+com.aa.i11l.app.acg.resources.tfdo.flexPricerAllFlows = {
+    "settings": {},
+    "siteOverrides": {},
+    "flexPricer": {},
+	"flexPricerMultiCity": {},
+    "search": {
+        "B_LOCATION_1": "",
+        "E_LOCATION_1": "",
+        "B_LOCATION_2": "",
+        "E_LOCATION_2": "",
+		"B_LOCATION_3": "",
+        "E_LOCATION_3": "",
+		"B_LOCATION_4": "",
+        "E_LOCATION_4": "",
+		"B_LOCATION_5": "",
+        "E_LOCATION_5": "",
+		"B_LOCATION_6": "",
+        "E_LOCATION_6": "",
+        "B_DATE_1": "",
+        "B_ANY_TIME_1": "",
+        "B_DATE_2": "",
+        "B_ANY_TIME_2": "",
+		"B_DATE_3": "",
+        "B_ANY_TIME_3": "",
+		"B_DATE_4": "",
+        "B_ANY_TIME_4": "",
+		"B_DATE_5": "",
+        "B_ANY_TIME_5": "",
+		"B_DATE_6": "",
+        "B_ANY_TIME_6": "",
+        "TRIP_TYPE": "",
+        "COMMERCIAL_FARE_FAMILY_1": "",
+        "TRAVELLER_TYPE_1": "",
+        "TRAVELLER_TYPE_2": "",
+        "TRAVELLER_TYPE_3": "",
+        "TRAVELLER_TYPE_4": "",
+        "TRAVELLER_TYPE_5": "",
+        "TRAVELLER_TYPE_6": "",
+        "TRAVELLER_TYPE_7": "",
+        "HAS_INFANT_1": "",
+        "HAS_INFANT_2": "",
+        "HAS_INFANT_3": "",
+        "HAS_INFANT_4": "",
+        "HAS_INFANT_5": "",
+        "HAS_INFANT_6": "",
+        "HAS_INFANT_7": "",
+        "DISPLAY_TYPE": "",
+        "ARRANGE_BY": ""
+	},
+    "globalOverrides": {}
+};
+
+/**
+ *	This object is used by the app context filter to compare origin/destination values
+ *  in the request against values in the stateTable. If a match is found it is replaced
+ *  with the equivalent property value in the cityTable. This allows us to filter
+ *  common mispellings or the use of state names instead of cities.
+ */
+com.aa.i11l.app.acg.resources.filter.stateToCityFilter = {
+    "stateTable": {
+        "stcId1": "florida",
+        "stcId2": "colorado",
+        "stcId3": "california"
+    },
+    "cityTable": {
+        "stcId1": "MIA",
+        "stcId2": "DEN",
+        "stcId3": "LAX"
+    }
+};
+
+/**
+ *	All resources that should be available to the app context class should be contained
+ *  within com.aa.i11l.app.resources. This resource bundle allows us to externalize
+ *  potential changeable data from the core application code
+ */
+com.aa.i11l.app.resources = {
+
+    ///////////////////////////////////////////////////////////////////////////
+	// This section defines what locales are supported
+	///////////////////////////////////////////////////////////////////////////
+	"locales": {
+		"en_AU": "en_AU",
+		"en_BE": "en_BE",
+		"fr_BE": "fr_BE",
+		"nl_BE": "nl_BE",
+		"en_CH": "en_CH",
+		"de_CH": "de_CH",
+		"fr_CH": "fr_CH",
+		"en_CN": "en_CN",
+		"zh_CN": "zh_CN",
+		"en_DE": "en_DE",
+		"de_DE": "de_DE",
+		"en_DK": "en_DK",
+		"en_ES": "en_ES",
+		"es_ES": "es_ES",
+		"en_FI": "en_FI",
+		"fi_FI": "fi_FI",
+		"en_FR": "en_FR",
+		"fr_FR": "fr_FR",
+		"en_HK": "en_HK",
+		"zh_HK": "zh_HK",
+		"en_IE": "en_IE",
+		"en_IL": "en_IL",
+		"en_IN": "en_IN",
+		"en_IT": "en_IT",
+		"it_IT": "it_IT",
+		"en_JP": "en_JP",
+		"ja_JP": "ja_JP",
+		"en_KR": "en_KR",
+		"ko_KR": "ko_KR",
+		"en_NL": "en_NL",
+		"nl_NL": "nl_NL",
+		"en_NO": "en_NO",
+		"en_NZ": "en_NZ",
+		"en_RU": "en_RU",
+		"ru_RU": "ru_RU",
+		"en_SE": "en_SE",
+		"en_PT": "en_PT",
+		"pt_PT": "pt_PT",
+		"en_GR": "en_GR"
+	},
+	///////////////////////////////////////////////////////////////////////////
+	// This section is used to control how the global and local configs should
+	// be processed.
+	//
+	// If useRequestFlowType has a value of false the acg app will use the default flow
+	// type key specified in defaultFlowType to build the reference to the ordered search
+	// data and trip flow request objects. E.G.
+	// com.aa.i11l.app.acg.resources.osdo['flexPricerAllFlows']
+	// com.aa.i11l.app.acg.resources.sdro['flexPricerAllFlows']
+	// If the useRequestFlowType value is true it will use the value in the flowType
+	// parameter sent from the search form. This allows us to use custom ordered and
+	// trip flow objects if there is a specific need for this without requiring a coding
+	// change to the core application.
+	///////////////////////////////////////////////////////////////////////////
+	"useRequestFlowType": false,             // Value boolean
+	"defaultFlowType": "flexPricerAllFlows", // Value - Any string
+
+	// Config and data structure object references
+	"orderedSearchObject": com.aa.i11l.app.acg.resources.osdo, // Object reference
+	"tripFlowObject": com.aa.i11l.app.acg.resources.tfdo,      // Object reference
+	"uiResources": com.aa.i11l.app.acg.resources.ui,	       // Object reference
+
+	// Ordered search data and trip flow request object partition keys
+    "defaultPartition": "settings",               // Value - Any string
+    "searchPartition": "search",                  // Value - Any string
+    "overridePartition": "siteOverrides",         // Value - Any string
+    "globalOverridePartition": "globalOverrides", // Value - Any string
+    "cffPartition": "cff",                        // Value - Any string
+
+	///////////////////////////////////////////////////////////////////////////
+	// This section tells the application if input should be validated
+	// against the mapping
+	///////////////////////////////////////////////////////////////////////////
+    "useMapping": true, // Value boolean
+
+	///////////////////////////////////////////////////////////////////////////
+	// This section tells the application how date formats should be processed
+	// The application can handle both individual day month tokens as well as
+	// JQuery date strings to build the Amadeus specific date format.
+	// Internally the app will always break everything down to individual
+	// day and month tokens and seperately calculate the year
+	// This section allows us to control how the application will parse complete
+	// date strings. The date label tells the application, which parameter in
+	// the request contains the date string. This is a partial key and the app
+	// will automatically increment for each date in the request E.G. date1, date2 etc
+	// The delimeter specifies what delimits the day, month and year. The
+	// dayLabel and monthLabel specify which properties to map the extracted day and
+	// month values to. The dateFormat property tells the application if a US format
+	// or European format should be used when parsing the dates. So in other words MM/DD
+	// or DD/MM. The yearPosition property tells the app whether to expect the year at
+	// the beginning of the date string or at the end
+	///////////////////////////////////////////////////////////////////////////
+	"dateLabel": "date",            // Value - Any string
+	"dateDelimeter": "/",           // Value - Any character
+	"dayLabel": "departureDay",     // Value - Any string
+	"monthLabel": "departureMonth", // Value - Any string
+	"dateFormat": "default",	    // Value - Fixed string ("us" or "default")
+	"yearPosition": "last",         // Value - Fixed string ("first" or "last")
+
+	///////////////////////////////////////////////////////////////////////////
+	// This section tells the application if a filter should be used to filter a
+	// particular field or set of fields in the raw input object. This is a basic filter
+	// that lets you compare a value against values in a source object and replace it
+	// with the corresponding value in the destination object. It also allows you to
+	// specify what length the value string should be before the filter is triggered
+	///////////////////////////////////////////////////////////////////////////
+    "filter_activate": true, // Value - boolean
+    "filterSettings": {
+		//  Reference to filter object | Value - Object reference
+        "filter_obj": com.aa.i11l.app.acg.resources.filter.stateToCityFilter,
+		// Array that specifies the keys for the source, destination and field
+		// specifier objects | Value - Array of strings
+        "filter_rules": ['stateTable', 'cityTable', 'stcFilterOnFields'],
+		// Specifies the minimum length a value must be before it should be filtered
+		// Value - integer
+        "filter_trigger": 3
+    },
+	// Specifies field properties eligible for filtering
+    "stcFilterOnFields": {
+        "param1": "origin1",
+        "param2": "destination1",
+		 "param3": "origin2",
+        "param4": "destination2",
+		 "param5": "origin3",
+        "param6": "destination3",
+		 "param7": "origin4",
+        "param8": "destination4",
+		 "param9": "origin5",
+        "param10": "destination5",
+		 "param11": "origin6",
+        "param12": "destination6"
+    },
+
+	///////////////////////////////////////////////////////////////////////////
+	// This section is used to control the flex range logic in the application
+	// If "useFlexRangeOverride" is set to true the override is activated. The
+	// config below controls the date range that should be used depending on
+	// the number of segments in the request
+	///////////////////////////////////////////////////////////////////////////
+	// Value - boolean (true activates & false turns it off
+	"useFlexRangeOverride": true,
+	// Value integer as string (This sets default range value)
+	"flexRangeDefault": "1",
+	// Value integer as string (This sets range override for 1 seg itins)
+	"flexRangeOneSeg": "1",
+	// Value integer as string (This sets range override for 2 seg itins)
+	"flexRangeTwoSeg": "1",
+	// Value integer as string (This sets range override for 3 seg itins)
+	"flexRangeThreeSeg": "1",
+	// Value integer as string (This sets range override for 4 seg itins)
+	"flexRangeFourSeg": "1",
+	// Value integer as string (This sets range override for 5 seg itins)
+	"flexRangeFiveSeg": "0",
+	// Value integer as string (This sets range override for 6 seg itins)
+	"flexRangeSixSeg": "0",
+	// Value - any string (Key to config object partition that will be augmented with
+	// native Amadeus date range params
+	"flexTfdoTarget": "siteOverrides",
+	// Value - string (Partial param name, which will be used to construct the Amadeus
+	// date range params. Example of complete param name DATE_RANGE_VALUE_1
+	"flexNativeDateRangeParam": "DATE_RANGE_VALUE_",
+	// Value - string (Partial param name, which will be used to construct the Amadeus
+	// date range qualifier params. Example of complete param name DATE_RANGE_QUALIFIER_1
+	"flexNativeDisplayParam": "DATE_RANGE_QUALIFIER_",
+	// Value - char (Amadeus display type value that should be used by the
+	// DATE_RANGE_QUALIFIER parameters
+	"flexNativeDisplayValue": "C",
+
+	///////////////////////////////////////////////////////////////////////////
+	// This section is used to control the flexible date/exact date logic
+	// if the input param searchType value matches the sched flag the sched
+	// the display type is set to use the upsell otherwise we set it to the
+	// calendar display
+	///////////////////////////////////////////////////////////////////////////
+	"schedSearchFlag": "schedSearch",
+	"schedSearchDisplayMode": "2",
+	"flexSearchDisplayMode": "1",
+
+	///////////////////////////////////////////////////////////////////////////
+	// This section is used to control the sort order logic
+	// The default sort order can be specified for flexpricer and flexpricer
+	// multi-city. We also set the sort order to be used when a time is
+	// specified in the request.
+	///////////////////////////////////////////////////////////////////////////
+	"ftSignatureFP": "flexPricer",
+	"ftSignatureFPMC": "flexPricerMultiCity",
+	"MCFPDefaultSortOrder": "E",
+	"FPDefaultSortOrder": "ND",
+	"timeSpecifiedSortOrder": "D",
+
+	///////////////////////////////////////////////////////////////////////////
+	// This section is used to control what language should be used in the
+	// tripflow request. If "useLocaleLang" is set to true the application will
+	// use the locale passed in the search request to determine the tripflow
+	// language. If "useLocaleLang" is set to false the language needs to be
+    // explicitley specified in the config
+	// The ISO to Amadeus language mapping is specified in the
+	// com.aa.i11l.app.acg.resources.lang object under the "tripFlowLanguage"
+	// property for each iso language code.
+	///////////////////////////////////////////////////////////////////////////
+	"useLocaleLang": true,
+	// Native Amadeus param name to specify the trip flow language
+	"langNativeParam": "LANGUAGE",
+	// Value - any string (Key to config object partition that will be augmented with
+	// native Amadeus language param
+	"langTfdoTarget": "siteOverrides",
+
+    ///////////////////////////////////////////////////////////////////////////
+    // This section is used to control if the On Hold option should overwrite
+    // the config value
+    ///////////////////////////////////////////////////////////////////////////
+    // Native Amadeus param name to specify the on hold option
+    "onHoldNativeParam": "SO_SITE_MOP_PAY_LATER",
+    // Value - any string (Key to config object partition that will be augmented with
+    // native on hold param
+    "onHoldNativeTarget": "siteOverrides"
+};
