@@ -38,8 +38,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 	  window.dataLayer = window.dataLayer || [];
 	  function gtag(){dataLayer.push(arguments);}
 	  gtag('js', new Date());
-	  //alert("client - 2 - " + clientId);
-	  //gtag('set', {'user_id': clientId });
+	  alert("client - 2 - " + clientId);
+	  gtag('set', {'user_id': clientId });
 	  gtag('config', 'UA-114196601-1');
 	</script>
 
@@ -57,12 +57,21 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 		})(window, document, 'script',
 				'https://www.google-analytics.com/analytics.js', 'ga');
 		ga('create', 'UA-114196601-1', 'auto');
+		
+		alert(ga(function(tracker) {
+			return tracker.get('clientId');
+		}));
+		
+		
+		ga('create', 'UA-114196601-1', {'userId': ga(function(tracker) {
+			return tracker.get('clientId');
+		})}); 
+		ga('set', 'dimension1', ga(function(tracker) {
+			return tracker.get('clientId');
+		})); 
 		ga('send', 'pageview');
 		
-		ga(function(tracker) {
-			alert("tracker id " + tracker.get('clientId'));
-			gtag('set', {'user_id': tracker.get('clientId')});
-		});  	
+		 	
 	</script>
 	
 	
