@@ -36,14 +36,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
 	<!-- Google Analytics -->
 	<script>	
-		
-		alert("ga all" + ga.getAll()[0].get('clientId'));
-		
-		
 		ga('create', 'UA-114196601-1', 'auto');
-		ga(function(tracker) {
-			window.globalVar = tracker.get('clientId');
-			alert("ga - 1 "  + window.globalVar);
+		ga(function(tracker) {		
+			var userClientId = tracker.get('clientId');
+			alert("ga - 1 "  + userClientId);
+			gtagForById(userClientId);		
 		});
 			
 		/*ga('create', 'UA-114196601-1', {'userId': ''); 
@@ -51,12 +48,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 		ga('send', 'pageview');	 	
 	
 	  //**********//
-	  window.dataLayer = window.dataLayer || [];
-	  function gtag(){dataLayer.push(arguments);}
-	  gtag('js', new Date());
-	  alert("ga - 2"  + window.globalVar);
-	  gtag('set', {'user_id': window.globalVar });
-	  gtag('config', 'UA-114196601-1');
+	  function gtagForById(userClientId) {
+		  window.dataLayer = window.dataLayer || [];
+		  function gtag(){dataLayer.push(arguments);}
+		  gtag('js', new Date());
+		  alert("ga - 2"  + userClientId);
+		  gtag('set', {'user_id': userClientId });
+		  gtag('config', 'UA-114196601-1');
+	  }
 	  //**********//
 	</script>
 	
@@ -1219,6 +1218,6 @@ for(var _gaq=_gaq||[],i=0;i<gaAccounts.length;i++){var tracker="";0<i&&(tracker=
 (function(){var a=document.createElement("script");a.type="text/javascript";a.async=!0;a.src=("https:"==document.location.protocol?"https://ssl":"http://www")+".google-analytics.com/ga.js";var b=document.getElementsByTagName("script")[0];b.parentNode.insertBefore(a,b)})();</script>
 </div>
 
-<textarea cols="80" rows="20" id="query-output"></textarea>
+<input type="text" cols="80" rows="20" id="query-output"></textarea>
 
 </body></html>
