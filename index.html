@@ -38,7 +38,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 		var clientId;
 		ga(function(tracker) {
 			clientId = tracker.get('clientId');
-			alert(clientId);
+			alert("client - 1" + clientId);
 		}); 	
 	</script>
 	
@@ -46,6 +46,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 	  window.dataLayer = window.dataLayer || [];
 	  function gtag(){dataLayer.push(arguments);}
 	  gtag('js', new Date());
+	  alert("client - 2" + clientId);
 	  gtag('set', {'user_id': clientId });
 	  gtag('config', 'UA-114196601-1');
 	</script>
