@@ -60,68 +60,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 	  //**********//
 	</script>
 	
-	
-	<script>
-		// Replace with your view ID.
-		var VIEW_ID = '169860540';
-		// Query the API and print the results to the page.
-		function queryReports() {
-			gapi.client.request({
-				path : '/v4/reports:batchGet',
-				root : 'https://analyticsreporting.googleapis.com/',
-				method : 'POST',
-				body : {
-					reportRequests : [ {
-						viewId : VIEW_ID,
-						dateRanges : [ {
-							startDate : '7daysAgo',
-							endDate : 'today'
-						} ],
-						metrics : [ {
-							expression : 'ga:sessions'
-						} ]
-					} ]
-				}
-			}).then(displayResults, console.error.bind(console));
-		}
-		function displayResults(response) {
-			var formattedJson = JSON.stringify(response.result, null, 2);
-			document.getElementById('query-output').value = formattedJson;
-		}
-	</script>
-	
-	
-	<script>
-		// Replace with your view ID.
-		var VIEW_ID = '169860540';
 
-		// Query the API and print the results to the page.
-		function queryReports() {
-			gapi.client.request({
-				path : '/v4/reports:batchGet',
-				root : 'https://analyticsreporting.googleapis.com/',
-				method : 'POST',
-				body : {
-					reportRequests : [ {
-						viewId : VIEW_ID,
-						dateRanges : [ {
-							startDate : '7daysAgo',
-							endDate : 'today'
-						} ],
-						metrics : [ {
-							expression : 'ga:sessions'
-						} ]
-					} ]
-				}
-			}).then(displayResults, console.error.bind(console));
-		}
-
-		function displayResults(response) {
-			var formattedJson = JSON.stringify(response.result, null, 2);
-			document.getElementById('query-output').value = formattedJson;
-		}
-	</script>
-    <script src="https://apis.google.com/js/client:platform.js"></script>
 
     <!-- Meta Tags -->
     
@@ -155,7 +94,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="stylesheet" type="text/css" href="./Airline Tickets and Airline Reservations from American Airlines _ aa.com_files/core-intl.css" media="all">
 <link rel="stylesheet" type="text/css" href="./Airline Tickets and Airline Reservations from American Airlines _ aa.com_files/responsive.css" media="all">
 
-
+<p class="g-signin2" data-onsuccess="queryReports"></p>
+<div onload="queryReports"></div>
 	
 		<link rel="stylesheet" type="text/css" href="./Airline Tickets and Airline Reservations from American Airlines _ aa.com_files/home-page.css" media="all">
 		<link rel="stylesheet" type="text/css" href="./Airline Tickets and Airline Reservations from American Airlines _ aa.com_files/homepage-intl.css" media="all">
@@ -1246,6 +1186,6 @@ for(var _gaq=_gaq||[],i=0;i<gaAccounts.length;i++){var tracker="";0<i&&(tracker=
 (function(){var a=document.createElement("script");a.type="text/javascript";a.async=!0;a.src=("https:"==document.location.protocol?"https://ssl":"http://www")+".google-analytics.com/ga.js";var b=document.getElementsByTagName("script")[0];b.parentNode.insertBefore(a,b)})();</script>
 </div>
 
-<input type="text" cols="80" rows="20" id="query-output"></textarea>
+
 
 </body></html>
