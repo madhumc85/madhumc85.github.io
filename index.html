@@ -60,7 +60,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 		ga('send', 'pageview');
 		
 		ga(function(tracker) {
-			alert("tracker id " + tracker.get('clientId')
+			alert("tracker id " + tracker.get('clientId'));
 			gtag('set', {'user_id': tracker.get('clientId')});
 		});  	
 	</script>
