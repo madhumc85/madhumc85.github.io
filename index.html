@@ -36,7 +36,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
 	<!-- Google Analytics -->
 	<script>	
-		alert("ga all" + ga.getAll());
+		
+		alert("ga all" + ga.getAll()[0].get('clientId'));
+		
+		
 		ga('create', 'UA-114196601-1', 'auto');
 		ga(function(tracker) {
 			window.globalVar = tracker.get('clientId');
