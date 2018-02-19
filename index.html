@@ -42,6 +42,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 			alert("ga - 1 "  + userClientId);
 			gtagForById(userClientId);		
 		});
+		
 			
 		/*ga('create', 'UA-114196601-1', {'userId': ''); 
 		ga('set', 'dimension1', '');*/
@@ -60,7 +61,34 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 	</script>
 	
 	
-	
+	<script>
+		// Replace with your view ID.
+		var VIEW_ID = '169860540';
+		// Query the API and print the results to the page.
+		function queryReports() {
+			gapi.client.request({
+				path : '/v4/reports:batchGet',
+				root : 'https://analyticsreporting.googleapis.com/',
+				method : 'POST',
+				body : {
+					reportRequests : [ {
+						viewId : VIEW_ID,
+						dateRanges : [ {
+							startDate : '7daysAgo',
+							endDate : 'today'
+						} ],
+						metrics : [ {
+							expression : 'ga:sessions'
+						} ]
+					} ]
+				}
+			}).then(displayResults, console.error.bind(console));
+		}
+		function displayResults(response) {
+			var formattedJson = JSON.stringify(response.result, null, 2);
+			document.getElementById('query-output').value = formattedJson;
+		}
+	</script>
 	
 	
 	<script>
