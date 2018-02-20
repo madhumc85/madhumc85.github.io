@@ -39,7 +39,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 		ga('create', 'UA-114196601-1', 'auto');
 		ga(function(tracker) {		
 			var userClientId = tracker.get('clientId');
-			alert("ga - 1 "  + userClientId);
+			//alert("ga - 1 "  + userClientId);
 			gtagForById(userClientId);		
 		});
 		
@@ -54,7 +54,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 		  window.dataLayer = window.dataLayer || [];
 		  function gtag(){dataLayer.push(arguments);}
 		  gtag('js', new Date());
-		  alert("ga - 2"  + userClientId);
+		  //alert("ga - 2"  + userClientId);
 		  gtag('set', {'user_id': userClientId });
 		  gtag('config', 'UA-114196601-1');
 	  }
