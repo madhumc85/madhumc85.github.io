@@ -30,38 +30,10 @@ new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
 })(window,document,'script','dataLayer','GTM-WBDTJ62');
-
 </script>
 <!-- End Google Tag Manager -->
 
-	<!-- Google Analytics -->
-	<script>	
-		ga('create', 'UA-114196601-1', 'auto');
-		ga(function(tracker) {		
-			var userClientId = tracker.get('clientId');
-			//alert("ga - 1 "  + userClientId);
-			gtagForById(userClientId);		
-		});
-		
-			
-		/*ga('create', 'UA-114196601-1', {'userId': ''); 
-		ga('set', 'dimension1', '');*/
-		ga('send', 'pageview');	 	
-		ga( 'send', 'event', 'Contact Form', 'submit' );
 	
-	  //**********//
-	  function gtagForById(userClientId) {
-		  window.dataLayer = window.dataLayer || [];
-		  function gtag(){dataLayer.push(arguments);}
-		  gtag('js', new Date());
-		  //alert("ga - 2"  + userClientId);
-		  gtag('set', {'user_id': userClientId });
-		  gtag('config', 'UA-114196601-1');
-		  document.getElementById("userEventLogClientId").value = userClientId;
-		  alert(document.getElementById("userEventLogClientId").value);
-	  }
-	  //**********//
-	</script>
 	
 
 
@@ -829,6 +801,33 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 </div>
 
-
+<!-- Google Analytics -->
+	<script>	
+		ga('create', 'UA-114196601-1', 'auto');
+		ga(function(tracker) {		
+			var userClientId = tracker.get('clientId');
+			//alert("ga - 1 "  + userClientId);
+			gtagForById(userClientId);		
+		});
+		
+			
+		/*ga('create', 'UA-114196601-1', {'userId': ''); 
+		ga('set', 'dimension1', '');*/
+		ga('send', 'pageview');	 	
+		ga( 'send', 'event', 'Contact Form', 'submit' );
+	
+	  //**********//
+	  function gtagForById(userClientId) {
+		  window.dataLayer = window.dataLayer || [];
+		  function gtag(){dataLayer.push(arguments);}
+		  gtag('js', new Date());
+		  //alert("ga - 2"  + userClientId);
+		  gtag('set', {'user_id': userClientId });
+		  gtag('config', 'UA-114196601-1');
+		  document.getElementById("userEventLogClientId").value = userClientId;
+		  alert(document.getElementById("userEventLogClientId").value);
+	  }
+	  //**********//
+	</script>
 
 </body></html>
