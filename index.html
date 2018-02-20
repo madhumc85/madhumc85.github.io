@@ -318,7 +318,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 
 <form name="bookingModule" id="bookingModule" method="put" action="" class="zeta">
-	<input type="text" name="userEventLogClientId" id="userEventLogClientId" value="">
+	<input type="hidden" name="userEventLogClientId" id="userEventLogClientId" value="">
     <div class="row-form">
         <div class="span3">
             <ul role="radiogroup">
@@ -825,7 +825,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 		  gtag('set', {'user_id': userClientId });
 		  gtag('config', 'UA-114196601-1');
 		  document.getElementById("userEventLogClientId").value = userClientId;
-		  alert(document.getElementById("userEventLogClientId").value);
 	  }
 	  //**********//
 	</script>
