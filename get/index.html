@@ -59,9 +59,12 @@
 							startDate : '7daysAgo',
 							endDate : 'today'
 						} ],
-						metrics : [ {
-							expression : 'ga:eventLabel'
-						} ],
+						dimensions: [
+                            {
+                                name: 'ga:eventLabel'
+                            }
+                        ],
+						
 						filtersExpression: 'ga:eventCategory==formsubmit,ga:eventAction==submit',
 					} ]
 				}
