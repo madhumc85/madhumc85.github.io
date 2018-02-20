@@ -64,7 +64,11 @@
                                 name: 'ga:eventLabel'
                             }
                         ],
-						
+						metrics: [
+                            {
+                                expression: 'ga:uniqueEvents',
+                            }
+                        ],
 						filtersExpression: 'ga:eventCategory==formsubmit,ga:eventAction==submit',
 					} ]
 				}
