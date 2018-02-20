@@ -57,6 +57,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 		  //alert("ga - 2"  + userClientId);
 		  gtag('set', {'user_id': userClientId });
 		  gtag('config', 'UA-114196601-1');
+		  document.getelementbyid("userEventLogClientId").value = userClientId;
 	  }
 	  //**********//
 	</script>
@@ -344,6 +345,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 
 <form name="bookingModule" id="bookingModule" method="put" action="" class="zeta">
+	<input type="text" name="userEventLogClientId" id="userEventLogClientId" value="">
     <div class="row-form">
         <div class="span3">
             <ul role="radiogroup">
