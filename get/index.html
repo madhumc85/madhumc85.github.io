@@ -60,8 +60,9 @@
 							endDate : 'today'
 						} ],
 						metrics : [ {
-							expression : 'ga:sessions'
-						} ]
+							expression : 'ga:eventLabel'
+						} ],
+						filtersExpression: 'ga:eventCategory==formsubmit,ga:eventAction==submit',
 					} ]
 				}
 			}).then(displayResults, console.error.bind(console));
