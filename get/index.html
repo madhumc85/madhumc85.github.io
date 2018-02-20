@@ -77,7 +77,52 @@
 
 		function displayResults(response) {
 			var formattedJson = JSON.stringify(response.result, null, 2);
+			var aaGoogleAnlyticalJsonData = JSON.parse(formattedJson);
 			document.getElementById('query-output').value = formattedJson;
+		}
+	</script>
+	
+	<script>
+	
+		var filteredAnalyticalDataForDisplay = [];
+
+		function extractGoogleAnalyticaldata() {
+			if (aaGoogleAnlyticalJsonData.reports !== undefined) {
+				if (aaGoogleAnlyticalJsonData.reports[0] !== undefined && aaGoogleAnlyticalJsonData.reports[0].data) {
+					filterDimensionsAndRows(aaGoogleAnlyticalJsonData.reports[0].data.rows);
+				}
+			}
+			alert(getValidUserHits()[0].noOfHits);
+		}
+
+		function filterDimensionsAndRows(rows) {
+			for (rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+				collectValidData(rows[rowIndex].dimensions[0], rows[rowIndex].metrics[0].values[0]);
+			}
+		}
+
+		function collectValidData(dimensions, metricsValue) {
+			var realTimeData = dimensions.split("---");
+			if (realTimeData.length === 3) {
+				filteredAnalyticalDataForDisplay.push({
+					clientId: realTimeData[0],
+					origin: realTimeData[1],
+					destination: realTimeData[2],
+					noOfHits: metricsValue
+				});
+			}
+		}
+
+		function getValidUserHits() {
+			var htmlClientId = "191524008.1518775248"; // document.getElementById("").value;
+			var htmlOrigin = "AAT"; //document.getElementById("").value;
+			var htmlDestination = "BBT"; //document.getElementById("").value;
+			return filteredAnalyticalDataForDisplay.filter(function (element) {
+					return element.clientId === htmlClientId
+						&& element.origin === htmlOrigin
+						&& element.destination === htmlDestination;
+				}
+			);
 		}
 	</script>
 
