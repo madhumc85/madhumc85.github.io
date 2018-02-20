@@ -78,7 +78,7 @@
 		function displayResults(response) {
 			var formattedJson = JSON.stringify(response.result, null, 2);
 			var aaGoogleAnlyticalJsonData = JSON.parse(formattedJson);
-			document.getElementById('query-output').value = formattedJson;
+			document.getElementById('query-output').innerHTML = formattedJson;
 		}
 	</script>
 	
