@@ -58,7 +58,7 @@
 					reportRequests : [ {
 						viewId : VIEW_ID,
 						dateRanges : [ {
-							startDate : 'today',
+							startDate : '7daysAgo',
 							endDate : 'today'
 						} ],
 						dimensions: [
@@ -94,7 +94,9 @@
 					filterDimensionsAndRows(aaGoogleAnlyticalJsonData.reports[0].data.rows);
 				}
 			}
-			alert(getValidUserHits()[0].noOfHits);
+			if(getValidUserHits()[0].noOfHits !== undefined) {
+				alert(getValidUserHits()[0].noOfHits);
+			}
 		}
 
 		function filterDimensionsAndRows(rows) {
