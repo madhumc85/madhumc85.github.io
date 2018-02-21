@@ -1,5 +1,6 @@
 	
 	var parsedJsonData;
+	var filteredAnalyticalDataForDisplay = [];
 	
 	<!-- *******************  Google Anylytics starts here ********************** -->
 		
@@ -53,7 +54,7 @@
 	<!-- *******************  Json parsing starts here ********************** -->
 	
 
-	var filteredAnalyticalDataForDisplay = [];
+	
 
 	function extractGoogleAnalyticaldata(aaGoogleAnlyticalJsonData) {
 		if (aaGoogleAnlyticalJsonData.reports !== undefined) {
