@@ -38,7 +38,8 @@
 	function displayResults(response) {
 		var formattedJson = JSON.stringify(response.result, null, 2);
 		aaGoogleAnlyticalJsonData = JSON.parse(formattedJson);
-		document.getElementById('query-output').innerHTML = formattedJson;
+		extractGoogleAnalyticaldata(aaGoogleAnlyticalJsonData);
+		//document.getElementById('query-output').innerHTML = formattedJson;
 	}
 
 	<!-- *******************  Google Anylytics ends here ********************** -->
@@ -54,14 +55,11 @@
 
 	var filteredAnalyticalDataForDisplay = [];
 
-	function extractGoogleAnalyticaldata() {
+	function extractGoogleAnalyticaldata(aaGoogleAnlyticalJsonData) {
 		if (aaGoogleAnlyticalJsonData.reports !== undefined) {
 			if (aaGoogleAnlyticalJsonData.reports[0] !== undefined && aaGoogleAnlyticalJsonData.reports[0].data) {
 				filterDimensionsAndRows(aaGoogleAnlyticalJsonData.reports[0].data.rows);
 			}
-		}
-		if(getValidUserHits()[0].noOfHits !== undefined) {
-			alert(getValidUserHits()[0].noOfHits);
 		}
 	}
 
@@ -83,7 +81,8 @@
 		}
 	}
 
-	function getValidUserHits() {
+	
+	/*function getValidUserHits() {
 		var htmlClientId = "191524008.1518775248"; // document.getElementById("").value;
 		var htmlOrigin = "AAT"; //document.getElementById("").value;
 		var htmlDestination = "BBT"; //document.getElementById("").value;
@@ -93,7 +92,7 @@
 					&& element.destination === htmlDestination;
 			}
 		);
-	}
+	}*/
 
 	
 	<!-- *******************  Json parsing ends here ********************** -->
