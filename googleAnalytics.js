@@ -1,5 +1,5 @@
 	
-	var aaGoogleAnlyticalJsonData;
+	var parsedJsonData;
 	
 	<!-- *******************  Google Anylytics starts here ********************** -->
 		
@@ -37,9 +37,9 @@
 
 	function displayResults(response) {
 		var formattedJson = JSON.stringify(response.result, null, 2);
-		aaGoogleAnlyticalJsonData = JSON.parse(formattedJson);
-		extractGoogleAnalyticaldata(aaGoogleAnlyticalJsonData);
-		//document.getElementById('query-output').innerHTML = formattedJson;
+		var parsedJsonData = JSON.parse(formattedJson);
+		//extractGoogleAnalyticaldata(aaGoogleAnlyticalJsonData);
+		document.getElementById('query-output').innerHTML = formattedJson;
 	}
 
 	<!-- *******************  Google Anylytics ends here ********************** -->
@@ -64,6 +64,7 @@
 		putInDisplayPopup();
 	}
 	
+	/*
 	function putInDisplayPopup() {
 		var consolidatedMessage;
 		for(index=0: index < filteredAnalyticalDataForDisplay.lenght; index++) {
@@ -76,7 +77,7 @@
 			+ "your travel history as below"
 			+ " "
 			+ consolidatedMessage;
-	} 
+	}*/
 
 	function filterDimensionsAndRows(rows) {
 		for (rowIndex = 0; rowIndex < rows.length; rowIndex++) {
