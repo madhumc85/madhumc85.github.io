@@ -39,7 +39,7 @@
 	function displayResults(response) {
 		var formattedJson = JSON.stringify(response.result, null, 2);
 		var parsedJsonData = JSON.parse(formattedJson);
-		extractGoogleAnalyticaldata(aaGoogleAnlyticalJsonData);
+		extractGoogleAnalyticaldata(parsedJsonData);
 		document.getElementById('query-output').innerHTML = formattedJson;
 	}
 
@@ -65,7 +65,7 @@
 		putInDisplayPopup();
 	}
 	
-	/*
+	
 	function putInDisplayPopup() {
 		var consolidatedMessage;
 		for(index=0: index < filteredAnalyticalDataForDisplay.lenght; index++) {
@@ -78,7 +78,7 @@
 			+ "your travel history as below"
 			+ " "
 			+ consolidatedMessage;
-	}*/
+	}
 
 	function filterDimensionsAndRows(rows) {
 		for (rowIndex = 0; rowIndex < rows.length; rowIndex++) {
