@@ -68,7 +68,7 @@
 	
 	function putInDisplayPopup() {
 		var consolidatedMessage;
-		for(index=0: index <= filteredAnalyticalDataForDisplay.length; index++) {
+		for(index=0; index <= filteredAnalyticalDataForDisplay.length; index++) {
 			consolidatedMessage = filteredAnalyticalDataForDisplay[0].origin + "-->" 
 				+ filteredAnalyticalDataForDisplay[0].destination + " number of searches are" 
 				+ filteredAnalyticalDataForDisplay[0].noOfHits;
