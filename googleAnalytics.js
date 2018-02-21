@@ -68,7 +68,7 @@
 	
 	function putInDisplayPopup() {
 		var loggedinUserId = document.getElementById('userEventLogClientId').value;
-		var consolidatedMessage;
+		var consolidatedMessage = "";
 		for(index=0; index < filteredAnalyticalDataForDisplay.length; index++) {
 			if(filteredAnalyticalDataForDisplay[index].noOfHits >= 3 
 				&& loggedinUserId === filteredAnalyticalDataForDisplay[index].clientId) 
