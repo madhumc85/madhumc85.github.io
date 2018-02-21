@@ -1,6 +1,6 @@
 	
 	var parsedJsonData;
-	var filteredAnalyticalDataForDisplay = [];
+	
 	
 	<!-- *******************  Google Anylytics starts here ********************** -->
 		
@@ -55,7 +55,7 @@
 	
 
 	
-
+	var filteredAnalyticalDataForDisplay = [];
 	function extractGoogleAnalyticaldata(aaGoogleAnlyticalJsonData) {
 		if (aaGoogleAnlyticalJsonData.reports !== undefined) {
 			if (aaGoogleAnlyticalJsonData.reports[0] !== undefined && aaGoogleAnlyticalJsonData.reports[0].data) {
@@ -68,7 +68,7 @@
 	
 	function putInDisplayPopup() {
 		var consolidatedMessage;
-		for(index=0: index < filteredAnalyticalDataForDisplay.lenght; index++) {
+		for(index=0: index <= filteredAnalyticalDataForDisplay.length; index++) {
 			consolidatedMessage = filteredAnalyticalDataForDisplay[0].origin + "-->" 
 				+ filteredAnalyticalDataForDisplay[0].destination + " number of searches are" 
 				+ filteredAnalyticalDataForDisplay[0].noOfHits;
