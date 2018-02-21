@@ -69,9 +69,9 @@
 	function putInDisplayPopup() {
 		var consolidatedMessage;
 		for(index=0; index < filteredAnalyticalDataForDisplay.length; index++) {
-			consolidatedMessage = filteredAnalyticalDataForDisplay[index].origin + "-->" 
+			consolidatedMessage += filteredAnalyticalDataForDisplay[index].origin + "-->" 
 				+ filteredAnalyticalDataForDisplay[index].destination + " number of searches are ~~ " 
-				+ filteredAnalyticalDataForDisplay[index].noOfHits;
+				+ filteredAnalyticalDataForDisplay[index].noOfHits + "\n";
 		}
 		document.getElementById('popupDisplayData').innerHTML = filteredAnalyticalDataForDisplay[0].clientId 
 			+ " "
