@@ -67,17 +67,20 @@
 	
 	
 	function putInDisplayPopup() {
+		var loggedinUserId = document.getElementById('userEventLogClientId').value;
 		var consolidatedMessage;
 		for(index=0; index < filteredAnalyticalDataForDisplay.length; index++) {
-			consolidatedMessage += filteredAnalyticalDataForDisplay[index].origin + "-->" 
-				+ filteredAnalyticalDataForDisplay[index].destination + " number of searches are ~~ " 
-				+ filteredAnalyticalDataForDisplay[index].noOfHits + "\n";
+			if(filteredAnalyticalDataForDisplay[index].noOfHits >= 3 
+				&& loggedinUserId === filteredAnalyticalDataForDisplay[index].clientId) 
+			{
+				consolidatedMessage += filteredAnalyticalDataForDisplay[index].origin + "-->" 
+					+ filteredAnalyticalDataForDisplay[index].destination + " number of searches are ~~ " 
+					+ filteredAnalyticalDataForDisplay[index].noOfHits + "\n";
+			}
 		}
-		document.getElementById('popupDisplayData').innerHTML = filteredAnalyticalDataForDisplay[0].clientId 
-			+ " "
-			+ "your travel history as below"
-			+ " "
-			+ consolidatedMessage;
+		document.getElementById('popupDisplayData').innerHTML = loggedinUserId 
+			+ " your travel history as below\n"
+			+ consolidatedMessage;						
 	}
 
 	function filterDimensionsAndRows(rows) {
