@@ -1,0 +1,16 @@
+/**
+*  UI-REFACTORED
+*    FROM --> ./legacy-web/src/main/js/js/aa/plugins/jquery/aaIconFontSpy.js
+*    TO   --> ./webapps/shared-web/src/main/assets/js/vendor/plugins/jquery.aaIconFontSpy.js
+**/
+/* jQuery-FontSpy.js v3.0.0
+ * https://github.com/patrickmarabeas/jQuery-FontSpy.js
+ *
+ * Copyright 2013, Patrick Marabeas http://pulse-dev.com
+ * Released under the MIT license
+ * http://opensource.org/licenses/mit-license.php
+ *
+ * Date: 02/11/2015
+ */
+!function(w,$){fontSpy=function(fontName,conf){var $html=$("html"),$body=$("body");if("string"!=typeof fontName||""===fontName)throw"A valid fontName is required. fontName must be a string and must not be an empty string.";var defaults={font:fontName,fontClass:"js-"+fontName.toLowerCase().replace(/\s/g,""),success:function(){},failure:function(){},testFont:"Courier New",testString:"QW@HhsXJ",glyphs:"",delay:50,timeOut:1e3,callback:$.noop},config=$.extend(defaults,conf),$testerPsuedo=$('<span id="fontspy-test-3874" aria-hidden="true"></span>').css("position","absolute").css("top","-9999px").css("left","-9999px").css("visibility","hidden").css("fontSize","250px");$body.append($testerPsuedo),document.styleSheets[0].hasOwnProperty("addRule")?document.styleSheets[0].addRule("#fontspy-test-3874::before",'content: "'+config.testString+config.glyphs+'"; font-family: "'+config.testFont+'" !important;'):document.styleSheets[0].insertRule('#fontspy-test-3874::before {content: "'+config.testString+config.glyphs+'"; font-family: "'+config.testFont+'" !important;}',0);var fallbackFontWidthPsuedo=$testerPsuedo.outerWidth(),fallbackFontHeightPsuedo=$testerPsuedo.outerHeight();document.styleSheets[0].hasOwnProperty("addRule")?document.styleSheets[0].addRule("#fontspy-test-3874::before",'content: "'+config.testString+config.glyphs+'"; font-family: "'+config.font+'", "'+config.testFont+'" !important;'):document.styleSheets[0].insertRule('#fontspy-test-3874::before {content: "'+config.testString+config.glyphs+'"; font-family: "'+config.font+'", "'+config.testFont+'" !important;}',1);var checkFont=function(){var loadedFontWidthPsuedo=$testerPsuedo.outerWidth(),loadedFontHeightPsuedo=$testerPsuedo.outerHeight();fallbackFontWidthPsuedo!==loadedFontWidthPsuedo&&fallbackFontHeightPsuedo!==loadedFontHeightPsuedo?(config.callback(),$html.addClass(config.fontClass),config&&config.success&&config.success(),$testerPsuedo.remove()):config.timeOut<0?($html.addClass("no-"+config.fontClass),config&&config.failure&&config.failure(),config.callback(new Error("FontSpy timeout")),$testerPsuedo.remove()):(setTimeout(checkFont,config.delay),config.timeOut=config.timeOut-config.delay)};checkFont()}}(0,jQuery),jQuery(document).ready(function(){var $html=jQuery("html");$html.hasClass("is-mobile")||$html.hasClass("is-tablet")?fontSpy("American Icons",{glyphs:"\\e000\\e039\\e03a\\e024",timeOut:6e5}):$html.addClass("js-americanicons")});
+//# sourceMappingURL=jquery.aaIconFontSpy.min.js.map

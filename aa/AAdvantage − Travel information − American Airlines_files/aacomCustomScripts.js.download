@@ -1,0 +1,62 @@
+jQuery(document).ready(function() {
+	/* Hard coded homepage breadcrumb link fix */
+	var home_bc_link = jQuery('#breadcrumb a:first-child').attr('href');
+	if (home_bc_link.indexOf('http://www.aa.com') > -1 ) {
+		jQuery('#breadcrumb a:first-child').attr('href','/homepage');
+	}
+	/* Function to hide back to top link if content is below 420px */	
+	var hideShowTopLink = function(){
+			if (jQuery('#aa-content-frame').height() < 420){
+				jQuery('.back-to-top').hide();
+			}
+			else{
+				jQuery('.back-to-top').show();
+			}
+		};
+	hideShowTopLink();
+	/* Animate back to top click */
+	jQuery('.back-to-top a').click(function(e){
+		/*e.preventDefault();
+		jQuery('body, html').animate({scrollTop: 0},'fast');*/
+		jQuery('#main-navigation').focus();
+	});	
+	/* Video modal handler */
+	jQuery('.video-popup').each(function(){
+		  jQuery(this).fancybox({
+			'type' : 'iframe',
+			'width': jQuery(this).data('width'),
+			'height' : jQuery(this).data('height'),
+			'scrolling': 'no',
+			afterShow: function () {
+		       jQuery('#player').attr("tabindex",1).focus()
+		    }
+		});
+	});
+	/* Allow deep linking to collapsible box on page load and open box if closed */
+	
+	var deepLinkCollapsibleBox = function(hash){
+			if(hash){
+				if(jQuery(hash).hasClass('collapsible-pane')){
+					jQuery(window).scrollTop(jQuery('a[href='+hash+'].collapsible-toggle').offset().top);
+					if(jQuery(hash).is(':hidden')){
+						jQuery("a[href='#"+hash+"'].collapsible-toggle").find('icon-expand').removeClass('icon-expand').addClass('icon-collapse');
+						jQuery(hash).delay(500).show();
+					}
+				}														
+			}
+		};	
+	deepLinkCollapsibleBox(location.hash);
+
+	jQuery("a[href^='#']:not([href='#'],.collapsible-toggle)").on('click',function (e) {
+		var hash = jQuery(this).attr('href');
+    	if(jQuery(hash).hasClass('collapsible-pane')){
+    		e.preventDefault();
+    		jQuery(window).scrollTop(jQuery("a[href='"+hash+"'].collapsible-toggle").offset().top);
+    		if(jQuery(hash).is(':hidden')){
+    			jQuery("a[href='"+hash+"'].collapsible-toggle").trigger('click');
+    		}
+    	}
+    	
+    });
+	
+});
