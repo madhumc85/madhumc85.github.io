@@ -68,12 +68,12 @@
 	
 	function putInDisplayPopup() {
 		var consolidatedMessage;
-		for(index=0; index <= filteredAnalyticalDataForDisplay.length; index++) {
-			consolidatedMessage = filteredAnalyticalDataForDisplay[0].origin + "-->" 
-				+ filteredAnalyticalDataForDisplay[0].destination + " number of searches are" 
-				+ filteredAnalyticalDataForDisplay[0].noOfHits;
+		for(index=0; index < filteredAnalyticalDataForDisplay.length; index++) {
+			consolidatedMessage = filteredAnalyticalDataForDisplay[index].origin + "-->" 
+				+ filteredAnalyticalDataForDisplay[index].destination + " number of searches are ~~ " 
+				+ filteredAnalyticalDataForDisplay[index].noOfHits;
 		}
-		document.getElementById('popupDisplayData').innerHTML = formattedJson;filteredAnalyticalDataForDisplay[0].clientId 
+		document.getElementById('popupDisplayData').innerHTML = filteredAnalyticalDataForDisplay[0].clientId 
 			+ " "
 			+ "your travel history as below"
 			+ " "
