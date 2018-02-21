@@ -62,6 +62,20 @@
 			}
 		}
 	}
+	
+	function putInDisplayPopup() {
+		var consolidatedMessage;
+		for(index=0: index >= filteredAnalyticalDataForDisplay.lenght; index++) {
+			consolidatedMessage = filteredAnalyticalDataForDisplay[0].origin + "-->" 
+				+ filteredAnalyticalDataForDisplay[0].destination + " number of searches are" 
+				+ filteredAnalyticalDataForDisplay[0].noOfHits;
+		}
+		document.getElementById('popupDisplayData').innerHTML = formattedJson;filteredAnalyticalDataForDisplay[0].clientId 
+			+ " "
+			+ "your travel history as below"
+			+ " "
+			+ consolidatedMessage;
+	} 
 
 	function filterDimensionsAndRows(rows) {
 		for (rowIndex = 0; rowIndex < rows.length; rowIndex++) {
