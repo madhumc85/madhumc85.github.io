@@ -61,6 +61,7 @@
 				filterDimensionsAndRows(aaGoogleAnlyticalJsonData.reports[0].data.rows);
 			}
 		}
+		putInDisplayPopup();
 	}
 	
 	function putInDisplayPopup() {
