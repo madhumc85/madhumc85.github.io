@@ -39,7 +39,7 @@
 	function displayResults(response) {
 		var formattedJson = JSON.stringify(response.result, null, 2);
 		var parsedJsonData = JSON.parse(formattedJson);
-		//extractGoogleAnalyticaldata(aaGoogleAnlyticalJsonData);
+		extractGoogleAnalyticaldata(aaGoogleAnlyticalJsonData);
 		document.getElementById('query-output').innerHTML = formattedJson;
 	}
 
