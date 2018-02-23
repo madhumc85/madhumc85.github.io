@@ -7,6 +7,12 @@
 <meta name="google-signin-scope" content="https://www.googleapis.com/auth/analytics.readonly">
 
 
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+
 <!-- Global site tag (gtag.js) - Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-114196601-1"></script>
 <!-- Load the JavaScript API client and Sign-in library. -->
@@ -399,7 +405,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <label for="aa-leavingOn">
                             Depart <span class="icon-required" aria-hidden="true"></span><span class="hidden-accessible">, required.</span>
                             <span class="hidden-accessible">(date format mm/dd/yyyy)</span>
-                            <input class="aaDatePicker hasDatepicker" id="aa-leavingOn" name="aa-leavingOn" type="text" value="" placeholder="" rel="date1"><button type="button" class="ui-datepicker-trigger"><span class="hidden-accessible">Open Calendar: to navigate the calendar, use the control key with the arrow keys</span><span class="hidden-accessible">Open Calendar: to navigate the calendar, use the control key with the arrow keys</span></button>
+                            <!--input class="aaDatePicker hasDatepicker" id="aa-leavingOn" name="aa-leavingOn" type="text" value="" placeholder="" rel="date1"><button type="button" class="ui-datepicker-trigger"><span class="hidden-accessible">Open Calendar: to navigate the calendar, use the control key with the arrow keys</span><span class="hidden-accessible">Open Calendar: to navigate the calendar, use the control key with the arrow keys</span></button-->
+							<input class="aaDatePicker hasDatepicker" id="aa-leavingOn" name="aa-leavingOn" type="date" value="" placeholder="" rel="date1">
                         </label>
                     </div>
                 </div>
@@ -408,7 +415,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <label for="aa-returningFrom">
                             Return <span class="icon-required" aria-hidden="true"></span><span class="hidden-accessible">, required.</span>
                             <span class="hidden-accessible">(date format mm/dd/yyyy)</span>
-                            <input class="aaDatePicker hasDatepicker" id="aa-returningFrom" name="aa-returningFrom" type="text" data-historicreturndate="" value="" placeholder="" rel="date2"><button type="button" class="ui-datepicker-trigger"><span class="hidden-accessible">Open Calendar: to navigate the calendar, use the control key with the arrow keys</span><span class="hidden-accessible">Open Calendar: to navigate the calendar, use the control key with the arrow keys</span></button>
+                            <!--input class="aaDatePicker hasDatepicker" id="aa-returningFrom" name="aa-returningFrom" type="text" data-historicreturndate="" value="" placeholder="" rel="date2"><button type="button" class="ui-datepicker-trigger"><span class="hidden-accessible">Open Calendar: to navigate the calendar, use the control key with the arrow keys</span><span class="hidden-accessible">Open Calendar: to navigate the calendar, use the control key with the arrow keys</span></button-->
+							<input class="aaDatePicker hasDatepicker" id="aa-returningFrom" name="aa-returningFrom" type="date" data-historicreturndate="" value="" placeholder="" rel="date2">
                         </label>
                     </div>
                 </div>
