@@ -73,8 +73,8 @@
 			if(filteredAnalyticalDataForDisplay[index].noOfHits >= 3 
 				&& loggedinUserId === filteredAnalyticalDataForDisplay[index].clientId) 
 			{
-				consolidatedMessage += "Flights from" + filteredAnalyticalDataForDisplay[index].origin + " to " 
-					+ filteredAnalyticalDataForDisplay[index].destination + " price starts " 
+				consolidatedMessage += "Flights from " + filteredAnalyticalDataForDisplay[index].origin + " to " 
+					+ filteredAnalyticalDataForDisplay[index].destination + " price starts from " 
 					+ filteredAnalyticalDataForDisplay[index].noOfHits*150 + "$ <br>";
 			}
 		}
