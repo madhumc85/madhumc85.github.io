@@ -73,14 +73,12 @@
 			if(filteredAnalyticalDataForDisplay[index].noOfHits >= 3 
 				&& loggedinUserId === filteredAnalyticalDataForDisplay[index].clientId) 
 			{
-				consolidatedMessage += filteredAnalyticalDataForDisplay[index].origin + "-->" 
-					+ filteredAnalyticalDataForDisplay[index].destination + " number of searches are ~~ " 
-					+ filteredAnalyticalDataForDisplay[index].noOfHits + "\n";
+				consolidatedMessage += "Flights from" + filteredAnalyticalDataForDisplay[index].origin + " to " 
+					+ filteredAnalyticalDataForDisplay[index].destination + " price starts " 
+					+ filteredAnalyticalDataForDisplay[index].noOfHits*150 + "$ <br>";
 			}
 		}
-		document.getElementById('popupDisplayData').innerHTML = loggedinUserId 
-			+ " your travel history as below\n"
-			+ consolidatedMessage;						
+		document.getElementById('popupDisplayData').innerHTML = consolidatedMessage
 	}
 
 	function filterDimensionsAndRows(rows) {
