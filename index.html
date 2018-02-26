@@ -899,6 +899,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 	   */
 	  function handleEmailResponse(resp) {
 		var primaryEmail;
+		alert(resp);
 		for (var i=0; i < resp.emails.length; i++) {
 		  if (resp.emails[i].type === 'account') primaryEmail = resp.emails[i].value;
 		}
